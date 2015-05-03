@@ -1,0 +1,6 @@
+{
+    "uuid": "log-printer-desklet@flaz14",
+    "name": "Log Printer Desklet",
+    "description": "Displays /var/log/syslog like 'tail -f' does it.",
+    "prevent-decorations": false
+}
