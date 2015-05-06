@@ -14,8 +14,8 @@ const MAX_LINES = 10;
 
 
 function Json(obj) {
-	//return JSON.stringify(obj);
-	return Object.toJSON(obj);
+	return JSON.stringify(obj);
+	//return Object.toJSON(obj);
 }
 
 // Copied and pasted from Stackoverflow 
@@ -70,8 +70,9 @@ function read_lines_from_data_stream(dataStream) {
 		if (currentLine[0] == null) {
 			break;	
 		}
-		let withoutTrailingSymbol = currentLine.slice(0, currentLine.length - 1);	
-		allLines.push(withoutTrailingSymbol);		
+		let withoutTrailingSymbol = currentLine.slice(0, currentLine.length - 1);
+		let pureJavascriptString = new String(withoutTrailingSymbol);		
+		allLines.push(pureJavascriptString);		
 	}
 	return allLines;
 }
@@ -90,15 +91,16 @@ LogPrinterDesklet.prototype = {
 
 		this._currentLines = 0;
 
-		this._dataStream = open_data_stream("/home/yura/Temp/test2.txt");
+//		this._dataStream = open_data_stream("/home/yura/Temp/test2.txt");
+		this._dataStream = open_data_stream("/var/log/syslog");
 		
 		this.setupUI();
 	},
 	
 	setupUI: function() {	
-		this._logBox = new St.BoxLayout( {width: 400, height: 300} );
+		this._logBox = new St.BoxLayout( {width: 400, height: 300, style_class: "log-box"} );
 	
-		this._logText = new St.Label();
+		this._logText = new St.Label({style_class: "log-text"});
 
 		this._logBox.add_actor(this._logText);
 		this.setContent(this._logBox);
@@ -107,47 +109,98 @@ LogPrinterDesklet.prototype = {
 	},
 
 	updateUI: function() {
-		let lineFromFile = this._dataStream.read_line(null);
+		let newLines = read_lines_from_data_stream(this._dataStream);
 		
-		if (lineFromFile[0] == null) {
-			return;		
-		}
-
 		let previousText = this._logText.get_text();
-		this._logText.set_text(previousText + "\n" + lineFromFile);
+		for(index = 0; index < newLines.length; ++index) {
+			this._logText.set_text(previousText + "\n" + newLines[index]);
+			previousText = this._logText.get_text();
+		}		
 	},
 
 	_updateLoop: function() {
 		this.updateUI()
 
 		Mainloop.timeout_add(1000, Lang.bind(this, this._updateLoop));
-	},
-
-		
+	},	
 }
 
 function test_read_empty_file() {
+	let expected = [];
+
 	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/empty-file.txt");
-	let expected = read_lines_from_data_stream(dataStream);
-	assert( Json(new Array()) ===  Json(expected));
-}
-
-
-function test_read_one_line_file() {
-	let expected = new Array();
-	expected.push("This is the line.");
-
-	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/one-line-file.txt");
 	let actual = read_lines_from_data_stream(dataStream);
-	global.log(">>>>>>>>>>>>>>>>>>>>>> " + Json(actual));
 	assert( Json(actual) ===  Json(expected));
 }
 
 
-function main(metadata, desklet_id) {
-	//test_read_empty_file();
-	//test_read_one_line_file();
+function test_read_one_line_file() {
+	let expected = ["This is the line."];
 
+	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/one-line-file.txt");
+	let actual = read_lines_from_data_stream(dataStream);
+
+	assert( Json(actual) ===  Json(expected) );
+}
+
+function test_skip_one_line_and_read_the_rest() {
+	let expected = [
+				"This is the second.",
+				"The third333",
+				"The fourth line.",
+				"And the fifth line is here"
+			];
+
+	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/five-line-file.txt");
+	// skip one line before use our function
+	dataStream.read_line(null);
+
+	// read the rest and compare
+	let actual = read_lines_from_data_stream(dataStream);
+
+	assert( Json(actual) ===  Json(expected) );
+}
+
+function test_skip_two_line_and_read_the_rest() {
+	let expected = [
+				"The third333",
+				"The fourth line.",
+				"And the fifth line is here"
+			];
+
+	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/five-line-file.txt");
+	// skip two lines before use our function
+	dataStream.read_line(null);
+	dataStream.read_line(null);
+
+	// read the rest and compare
+	let actual = read_lines_from_data_stream(dataStream);
+
+	assert( Json(actual) ===  Json(expected) );
+}
+
+function test_skip_all_lines_and_read_the_rest() {
+	let expected = [ ];
+
+	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/two-line-file.txt");
+	// skip two lines before use our function
+	dataStream.read_line(null);
+	dataStream.read_line(null);
+
+	// the rest of file should be empty
+	let actual = read_lines_from_data_stream(dataStream);
+
+
+	global.log(">>>>>> actual: " + actual);
+	assert( Json(actual) ===  Json(expected) );
+}
+
+function main(metadata, desklet_id) {
+	test_read_empty_file();
+	test_read_one_line_file();
+	test_skip_one_line_and_read_the_rest();
+	test_skip_two_line_and_read_the_rest();
+	test_skip_all_lines_and_read_the_rest();
 
 	return new LogPrinterDesklet(metadata, desklet_id);
 }
