@@ -10,6 +10,8 @@ const Gio = imports.gi.Gio;
 
 const Gtk = imports.gi.Gtk;
 
+const Settings = imports.ui.settings;
+
 const MAX_LINES = 10;
 
 
@@ -89,13 +91,33 @@ LogPrinterDesklet.prototype = {
 	_init: function(metadata, desklet_id) {
 		Desklet.Desklet.prototype._init.call(this, metadata, desklet_id);
 
+            this.settings = new Settings.DeskletSettings(
+                    this, this.metadata.uuid, this.instance_id);
+
+		global.log(">>>>>>>>>>>>>>>>> " + getAllProperties(this.settings));
+		global.log("||||||||||||||||| " + getAllMethods(this.settings));		
+		global.log("property: " + this.settings.getValue("logBoxWidth"));
+		global.log("path to file: " + this.settings.get_file_path());
+
+//            this.settings.bindProperty(
+  //                  Settings.BindingDirection.IN,
+    //                "subreddit",
+      //              "subreddit",
+        //            this._onSubredditChange,
+          //          null);
+
+
 		this._currentLines = 0;
 
-//		this._dataStream = open_data_stream("/home/yura/Temp/test2.txt");
-		this._dataStream = open_data_stream("/var/log/syslog");
+		this._dataStream = open_data_stream("/home/yura/Temp/test2.txt");
+//		this._dataStream = open_data_stream("/var/log/syslog");
 		
 		this.setupUI();
 	},
+
+    _onSubredditChange: function() {
+
+    },
 	
 	setupUI: function() {	
 		this._logBox = new St.BoxLayout( {width: 400, height: 300, style_class: "log-box"} );
@@ -115,7 +137,7 @@ LogPrinterDesklet.prototype = {
 		for(index = 0; index < newLines.length; ++index) {
 			this._logText.set_text(previousText + "\n" + newLines[index]);
 			previousText = this._logText.get_text();
-		}		
+		}	
 	},
 
 	_updateLoop: function() {
@@ -128,7 +150,7 @@ LogPrinterDesklet.prototype = {
 function test_read_empty_file() {
 	let expected = [];
 
-	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/empty-file.txt");
+	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/test/sample-files/empty-file.txt");
 	let actual = read_lines_from_data_stream(dataStream);
 	assert( Json(actual) ===  Json(expected));
 }
@@ -137,7 +159,7 @@ function test_read_empty_file() {
 function test_read_one_line_file() {
 	let expected = ["This is the line."];
 
-	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/one-line-file.txt");
+	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/test/sample-files/one-line-file.txt");
 	let actual = read_lines_from_data_stream(dataStream);
 
 	assert( Json(actual) ===  Json(expected) );
@@ -151,7 +173,7 @@ function test_skip_one_line_and_read_the_rest() {
 				"And the fifth line is here"
 			];
 
-	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/five-line-file.txt");
+	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/test/sample-files/five-line-file.txt");
 	// skip one line before use our function
 	dataStream.read_line(null);
 
@@ -168,7 +190,7 @@ function test_skip_two_line_and_read_the_rest() {
 				"And the fifth line is here"
 			];
 
-	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/five-line-file.txt");
+	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/test/sample-files/five-line-file.txt");
 	// skip two lines before use our function
 	dataStream.read_line(null);
 	dataStream.read_line(null);
@@ -182,7 +204,7 @@ function test_skip_two_line_and_read_the_rest() {
 function test_skip_all_lines_and_read_the_rest() {
 	let expected = [ ];
 
-	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/log-printer-desklet@flaz14/test/sample-files/two-line-file.txt");
+	let dataStream = open_data_stream("/home/yura/Projects/log-printer-desklet/test/sample-files/two-line-file.txt");
 	// skip two lines before use our function
 	dataStream.read_line(null);
 	dataStream.read_line(null);
@@ -190,17 +212,15 @@ function test_skip_all_lines_and_read_the_rest() {
 	// the rest of file should be empty
 	let actual = read_lines_from_data_stream(dataStream);
 
-
-	global.log(">>>>>> actual: " + actual);
 	assert( Json(actual) ===  Json(expected) );
 }
 
 function main(metadata, desklet_id) {
-	test_read_empty_file();
-	test_read_one_line_file();
-	test_skip_one_line_and_read_the_rest();
-	test_skip_two_line_and_read_the_rest();
-	test_skip_all_lines_and_read_the_rest();
+//	test_read_empty_file();
+//	test_read_one_line_file();
+//	test_skip_one_line_and_read_the_rest();
+//	test_skip_two_line_and_read_the_rest();
+//	test_skip_all_lines_and_read_the_rest();
 
 	return new LogPrinterDesklet(metadata, desklet_id);
 }
