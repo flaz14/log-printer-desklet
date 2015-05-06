@@ -46,9 +46,11 @@ LogPrinterDesklet.prototype = {
 		Desklet.Desklet.prototype._init.call(this, metadata, desklet_id);
 		this.settings = new Settings.DeskletSettings(this, this.metadata.uuid, this.instance_id);
 
+		// determine location of test directory and run tests 
 		let testDir = GLib.get_home_dir() + "/.local/share/cinnamon/desklets/" + this.metadata.uuid + "/test/sample-files/"
 		run_tests(testDir);
 
+		// open log file to be displayed
 		this._dataStream = open_data_stream("/home/yura/Temp/test2.txt");
 		
 		this.setupUI();
@@ -155,13 +157,15 @@ function run_tests(testDir) {
 }
 
 ////////////////////////// Utility functions //////////////////////////
+
+// Converts object into JSON string.
 function Json(obj) {
 	return JSON.stringify(obj);
 }
 
-
-// Copied and pasted from Stackoverflow 
-// (http://stackoverflow.com/questions/15313418/javascript-assert)
+// Checks whether 'condition' is true. 
+// If 'condition' is false then error arises. In this case running desklet will be unsuccessful.
+// Code is copied and pasted from Stackoverflow (http://stackoverflow.com/questions/15313418/javascript-assert).
 function assert(condition, message) {
     if (!condition) {
         message = message || "Assertion failed";
@@ -172,8 +176,10 @@ function assert(condition, message) {
     }
 }
 
-// Copied and pasted from Stackoverflow 
-// (http://stackoverflow.com/questions/152483/is-there-a-way-to-print-all-methods-of-an-object-in-javascript)
+// Returns string that contains all methods names in given object.
+// Each method is described in separate line.
+// Code is copied and pasted from Stackoverflow 
+// (http://stackoverflow.com/questions/152483/is-there-a-way-to-print-all-methods-of-an-object-in-javascript).
 function getAllMethods(obj) {
 	var result = [];
 	for (var id in obj) {
@@ -188,8 +194,10 @@ function getAllMethods(obj) {
 	return result.join("\n");
 }
 
-// Copied and pasted from Stackoverflow
-// (http://stackoverflow.com/questions/208016/how-to-list-the-properties-of-a-javascript-object)
+// Returns string that contains all properties names in given object.
+// Each property is described in separate line.
+// Code is copied and pasted from Stackoverflow
+// (http://stackoverflow.com/questions/208016/how-to-list-the-properties-of-a-javascript-object).
 function getAllProperties(obj){
 	var keys = [];
 	for(var key in obj){
@@ -197,5 +205,4 @@ function getAllProperties(obj){
 	}
 	return keys.join("\n");
 }
-
 
