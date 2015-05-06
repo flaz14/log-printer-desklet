@@ -1,0 +1,9 @@
+.log-box {
+	background-color: DimGray;
+	color: LawnGreen;
+	padding: 5px;
+}
+
+.log-text {
+	font-family: "Monospace";
+}
