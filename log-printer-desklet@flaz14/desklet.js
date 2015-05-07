@@ -98,17 +98,17 @@ LogPrinterDesklet.prototype = {
 		run_tests(testDir);
 
 		// initialize worker objects
-//		this.screen = new Screen(64, 48);
+		this.screen = new Screen(64, 20);
 		
-
 		// open log file to be displayed
-		this._dataStream = open_data_stream("/home/yura/Temp/test2.txt");
+		//this._dataStream = open_data_stream("/home/yura/Temp/test2.txt");
+		this._dataStream = open_data_stream("/var/log/syslog");
 		
 		this.setupUI();
 	},
 
 	setupUI: function() {	
-		this._logBox = new St.BoxLayout( {width: 400, height: 300, style_class: "log-box"} );
+		this._logBox = new St.BoxLayout( {width: 800, height: 600, style_class: "log-box"} );
 	
 		this._logText = new St.Label({style_class: "log-text"});
 
@@ -121,11 +121,9 @@ LogPrinterDesklet.prototype = {
 	updateUI: function() {
 		let newLines = read_lines_from_data_stream(this._dataStream);
 		
-		let previousText = this._logText.get_text();
-		for(index = 0; index < newLines.length; ++index) {
-			this._logText.set_text(previousText + "\n" + newLines[index]);
-			previousText = this._logText.get_text();
-		}	
+		this.screen.addLines(newLines);
+
+		this._logText.set_text( this.screen.getText() );
 	},
 
 	_updateLoop: function() {
