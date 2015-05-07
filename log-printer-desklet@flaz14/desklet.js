@@ -50,6 +50,33 @@ function split_string(string, chunkLength) {
 	return chunks;
 }
 
+////////////////////////// Core classes //////////////////////////
+function Screen(width, height) {
+	this.width = width;
+	this.height = height;
+	this.lines = [];
+
+	this.getText = function() {
+		let text = "";
+		for(index = 0; index < this.lines.length; index++) {
+			text += this.lines[index] + "\n";
+		}
+		return text;
+	}
+
+	this.addLines = function(newStrings) {
+		let splittedLines = [];
+		for(let index = 0; index < newStrings.length; index++) {
+			let currentSplittedLine = split_string(newStrings[index], this.width);
+			splittedLines = splittedLines.concat(currentSplittedLine);
+		}
+		this.lines = this.lines.concat(splittedLines);
+		if ( this.lines.length > this.height ) {
+			this.lines = this.lines.slice( -this.height);
+		}
+	}
+}
+
 ////////////////////////// Running Desklet code //////////////////////////
 function main(metadata, desklet_id) {
 	return new LogPrinterDesklet(metadata, desklet_id);
@@ -69,6 +96,10 @@ LogPrinterDesklet.prototype = {
 		// determine location of test directory and run tests 
 		let testDir = GLib.get_home_dir() + "/.local/share/cinnamon/desklets/" + this.metadata.uuid + "/test/sample-files/"
 		run_tests(testDir);
+
+		// initialize worker objects
+//		this.screen = new Screen(64, 48);
+		
 
 		// open log file to be displayed
 		this._dataStream = open_data_stream("/home/yura/Temp/test2.txt");
@@ -111,7 +142,7 @@ function run_tests(testDir) {
 	global.log("test directory: " + testDir)
 	
 	// Test cases (definitions):
-	let workWithFilesTestCases = {  
+	let test_read_lines_from_data_stream = {  
 		test_read_empty_file: function(testDir) {
 			let expected = [];
 			let dataStream = open_data_stream(testDir + "empty-file.txt");
@@ -168,7 +199,7 @@ function run_tests(testDir) {
 		}
 	};
 
-	let workWithStringsTestCases = {
+	let test_split_string = {
 		test_split_empty_string_into_zero_sized_chunks: function() {
 			let expected = [ ];
 			let actual = split_string("", 0);
@@ -216,21 +247,104 @@ function run_tests(testDir) {
 			let actual = split_string("apple", -1);
 			assert( Json(actual) == Json(expected) );
 		}
-	
-		
-
-
 	};
 
+	let test_screen = {
+		test_get_text_from_clear_screen: function() {
+			let expected = "";
+			let screen = new Screen(50, 6);
+			let actual = screen.getText();
+			assert( Json(actual) == Json(expected) );
+		}, 
 
-	// Test cases (runs):
-	for (var testCase in workWithFilesTestCases) {
-		workWithFilesTestCases[testCase](testDir);		
-	}
-	for (var testCase in workWithStringsTestCases) {
-		workWithStringsTestCases[testCase]();		
-	}
+		test_add_one_line: function() {
+			let expected = "one\n";
+			let screen = new Screen(50, 6);
+			screen.addLines( ["one"] );
+			let actual = screen.getText();
+			assert( Json(actual) == Json(expected) );
+		},
+		
+		test_add_2_lines_from_6: function() {
+			let expected = "one\ntwo\n";
+			let screen = new Screen(50, 6);
+			screen.addLines( ["one", "two"] );
+			let actual = screen.getText();
+			assert( Json(actual) == Json(expected) );
+		},
+
+		test_add_5_lines_from_5: function() {
+			let expected = "1\n2\n3\n4\n5\n";
+			let screen = new Screen(50, 5);
+			screen.addLines( ["1", "2", "3", "4", "5"] );
+			let actual = screen.getText();
+			assert( Json(actual) == Json(expected) );		
+		},
+
+		test_overload_empty_screen_with_1_line: function() {
+			let expected = "2\n3\n4\n5\n6\n";
+			let screen = new Screen(50, 5);
+			screen.addLines( ["1", "2", "3", "4", "5", "6"] );
+			let actual = screen.getText();
+			assert( Json(actual) == Json(expected) );		
+		},
+		
+		test_oveload_empty_screen_with_2_lines: function() {
+			let expected = "3\n4\n5\n6\n7\n";
+			let screen = new Screen(50, 5);
+			screen.addLines( ["1", "2", "3", "4", "5", "6", "7"] );
+			let actual = screen.getText();
+			assert( Json(actual) == Json(expected) );							
+		},
+
+		test_oveload_non_empty_screen_with_3_lines: function() {
+			let expected = "4\n5\n6\n7\n8\n";
+			let screen = new Screen(50, 5);
+			screen.addLines( ["1", "2", "3", "4", "5"] );
+			screen.addLines( ["6", "7", "8"] );
+			let actual = screen.getText();
+			assert( Json(actual) == Json(expected) );							
+		},
+		
+		test_overload_screen_with_many_lines: function() {
+			let expected = "4\n5\n6\n";
+			let screen = new Screen(50, 3);
+			screen.addLines( ["1", "2", "3"] );
+			screen.addLines( ["4", "5", "6"] );
+			let actual = screen.getText();
+			assert( Json(actual) == Json(expected) );									
+		}, 
+
+		test_add_lines_which_should_be_splitted: function() {
+			let expected = "appl\ne\noran\nge\nlime\n";
+			let screen = new Screen(4, 5);
+			screen.addLines( ["apple", "orange", "lime"] );
+			let actual = screen.getText();
+			assert( Json(actual) == Json(expected) );	
+		},
+
+		test_add_lines_which_should_be_splitted_just_another_case: function() {
+			let expected = "s ov\ner t\nhe l\nazy \ndog.\n";
+			let screen = new Screen(4, 5);
+			screen.addLines( ["The quick brown fox jumps over the lazy dog."] );
+			let actual = screen.getText();
+			global.log(">>>>> " + actual);
+			assert( Json(actual) == Json(expected) );	
+		}
+	};
+
+	let test_scroll_screen = {};
 	
+	// Test cases (runs):
+	for (var testCase in test_read_lines_from_data_stream) {
+		test_read_lines_from_data_stream[testCase](testDir);		
+	}
+	for (var testCase in test_split_string) {
+		test_split_string[testCase]();		
+	}
+	for (var testCase in test_screen) {
+		test_screen[testCase]();		
+	}		
 
 	global.log("TESTS OK.");
 }
