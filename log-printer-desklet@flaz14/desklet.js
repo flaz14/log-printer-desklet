@@ -8,6 +8,9 @@ const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
 const Settings = imports.ui.settings;
 
+const PIXELS_PER_SYMBOL_HORIZONTAL = 8;
+const PIXELS_PER_SYMBOL_VERTICAL = 17.1;
+
 ////////////////////////// Core functions //////////////////////////
 function open_data_stream(filename) {
 	let file = Gio.file_new_for_path(filename);
@@ -97,18 +100,23 @@ LogPrinterDesklet.prototype = {
 		let testDir = GLib.get_home_dir() + "/.local/share/cinnamon/desklets/" + this.metadata.uuid + "/test/sample-files/"
 		run_tests(testDir);
 
-		// initialize worker objects
-		this.screen = new Screen(64, 20);
+		// calculate size of virtual screens (from width and height in pixels to width and height in symbols)
+		this._widthInPixels = this.settings.getValue("logBoxWidth");
+		this._heightInPixels = this.settings.getValue("logBoxHeight");
+		let widthInSymbols = parseInt(this._widthInPixels / PIXELS_PER_SYMBOL_HORIZONTAL);
+		let heightInSymbols = parseInt(this._heightInPixels / PIXELS_PER_SYMBOL_VERTICAL);
+		
+		this.screen = new Screen(widthInSymbols, heightInSymbols);
 		
 		// open log file to be displayed
-		//this._dataStream = open_data_stream("/home/yura/Temp/test2.txt");
+//		this._dataStream = open_data_stream("/home/yura/Temp/test3.txt");
 		this._dataStream = open_data_stream("/var/log/syslog");
 		
 		this.setupUI();
 	},
 
-	setupUI: function() {	
-		this._logBox = new St.BoxLayout( {width: 800, height: 600, style_class: "log-box"} );
+	setupUI: function() {		
+		this._logBox = new St.BoxLayout( {width: this._widthInPixels, height: this._heightInPixels, style_class: "log-box"} );
 	
 		this._logText = new St.Label({style_class: "log-text"});
 

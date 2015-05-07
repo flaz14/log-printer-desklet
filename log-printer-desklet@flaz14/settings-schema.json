@@ -1,22 +1,22 @@
 {
     "logBoxWidth": {
-        "default": 400,
+        "default": 1680,
         "type": "spinbutton",
         "min": 100,
         "max": 1680,
-        "step": 50,
+        "step": 25,
         "description": "Width:",
         "units": "pixels"
     },
 
     "logBoxHeight": {
-        "default": 300,
+        "default": 925,
         "type": "spinbutton",
         "min": 100,
         "max": 1050,
         "description": "Height:",
         "units": "pixels",
-        "step": 50
+        "step": 25
     }
 }
 
