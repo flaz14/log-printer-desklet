@@ -30,6 +30,26 @@ function read_lines_from_data_stream(dataStream) {
 	return allLines;
 }
 
+function split_string(string, chunkLength) {
+	if (chunkLength <= 0) 
+		return [];
+	if (chunkLength > string.length)
+		return [string];
+	let chunks = [];
+	let prevChunkEndIndex = 0;
+	for(index = 1; index < string.length; index++) {
+		if (index % chunkLength == 0) {
+			let currentChunk = string.slice(prevChunkEndIndex, index);
+			chunks.push(currentChunk);
+			prevChunkEndIndex = index;
+		}
+	}
+	let lastChunk = string.slice(prevChunkEndIndex, string.length);
+	if (lastChunk.length > 0)
+		chunks.push(lastChunk);
+	return chunks;
+}
+
 ////////////////////////// Running Desklet code //////////////////////////
 function main(metadata, desklet_id) {
 	return new LogPrinterDesklet(metadata, desklet_id);
@@ -91,67 +111,126 @@ function run_tests(testDir) {
 	global.log("test directory: " + testDir)
 	
 	// Test cases (definitions):
-	let testCases = {  
-				test_read_empty_file: function(testDir) {
-					let expected = [];
-					let dataStream = open_data_stream(testDir + "empty-file.txt");
-					let actual = read_lines_from_data_stream(dataStream);
-					assert( Json(actual) ===  Json(expected));
-				},
-				
-				test_read_one_line_file: function(testDir) {
-					let expected = ["This is the line."];
-					let dataStream = open_data_stream(testDir + "one-line-file.txt");
-					let actual = read_lines_from_data_stream(dataStream);
-					assert( Json(actual) ===  Json(expected) );
-				},
+	let workWithFilesTestCases = {  
+		test_read_empty_file: function(testDir) {
+			let expected = [];
+			let dataStream = open_data_stream(testDir + "empty-file.txt");
+			let actual = read_lines_from_data_stream(dataStream);
+			assert( Json(actual) ===  Json(expected));
+		},
+			
+		test_read_one_line_file: function(testDir) {
+			let expected = ["This is the line."];
+			let dataStream = open_data_stream(testDir + "one-line-file.txt");
+			let actual = read_lines_from_data_stream(dataStream);
+			assert( Json(actual) ===  Json(expected) );
+		},
 
-				test_skip_one_line_and_read_the_rest: function(testDir) {
-					let expected = [
-						"This is the second.",
-						"The third333",
-						"The fourth line.",
-						"And the fifth line is here"
-					];
-					let dataStream = open_data_stream(testDir + "five-line-file.txt");
-					// skip one line before use our function
-					dataStream.read_line(null);
-					// read the rest of file
-					let actual = read_lines_from_data_stream(dataStream);
-					assert( Json(actual) ===  Json(expected) );
-				},
+		test_skip_one_line_and_read_the_rest: function(testDir) {
+			let expected = [
+				"This is the second.",
+				"The third333",
+				"The fourth line.",
+				"And the fifth line is here"
+			];
+			let dataStream = open_data_stream(testDir + "five-line-file.txt");
+			// skip one line before use our function
+			dataStream.read_line(null);
+			// read the rest of file
+			let actual = read_lines_from_data_stream(dataStream);
+			assert( Json(actual) ===  Json(expected) );
+		},
 
-				test_skip_two_line_and_read_the_rest: function(testDir) {
-					let expected = [
-						"The third333",
-						"The fourth line.",
-						"And the fifth line is here"
-					];	
-					let dataStream = open_data_stream(testDir + "five-line-file.txt");
-					// skip two lines before use our function
-					dataStream.read_line(null);
-					dataStream.read_line(null);
-					// read the rest and compare
-					let actual = read_lines_from_data_stream(dataStream);
-					assert( Json(actual) ===  Json(expected) );
-				},
+		test_skip_two_line_and_read_the_rest: function(testDir) {
+			let expected = [
+				"The third333",
+				"The fourth line.",
+				"And the fifth line is here"
+			];	
+			let dataStream = open_data_stream(testDir + "five-line-file.txt");
+			// skip two lines before use our function
+			dataStream.read_line(null);
+			dataStream.read_line(null);
+			// read the rest and compare
+			let actual = read_lines_from_data_stream(dataStream);
+			assert( Json(actual) ===  Json(expected) );
+		},
 
-				test_skip_all_lines_and_read_the_rest: function(testDir) {
-					let expected = [ ];
-					let dataStream = open_data_stream(testDir + "two-line-file.txt");
-					// skip two lines before use our function
-					dataStream.read_line(null);
-					dataStream.read_line(null);
-					// the rest of file should be empty
-					let actual = read_lines_from_data_stream(dataStream);
-					assert( Json(actual) ===  Json(expected) );
-				}
-			};
+		test_skip_all_lines_and_read_the_rest: function(testDir) {
+			let expected = [ ];
+			let dataStream = open_data_stream(testDir + "two-line-file.txt");
+			// skip two lines before use our function
+			dataStream.read_line(null);
+			dataStream.read_line(null);
+			// the rest of file should be empty
+			let actual = read_lines_from_data_stream(dataStream);
+			assert( Json(actual) ===  Json(expected) );
+		}
+	};
+
+	let workWithStringsTestCases = {
+		test_split_empty_string_into_zero_sized_chunks: function() {
+			let expected = [ ];
+			let actual = split_string("", 0);
+			assert( Json(actual) == Json(expected) );
+		},
+
+		test_split_non_empty_string_into_zero_sized_chunks: function() {
+			let expected = [ ];
+			let actual = split_string("sample string", 0)
+			assert( Json(actual) == Json(expected) );
+		},
+
+		test_split_into_chunks_2: function() {
+			let expected = ["ap", "pl", "e"];
+			let actual = split_string("apple", 2);
+			assert( Json(actual) == Json(expected) );
+		},					
+		
+		test_split_into_chunks_1: function() {
+			let expected = ["a", "p", "p", "l", "e"];
+			let actual = split_string("apple", 1);
+			assert( Json(actual) == Json(expected) );
+		}, 
+
+		test_split_into_chunks_3: function() {
+			let expected = ["app", "le"];
+			let actual = split_string("apple", 3);
+			assert( Json(actual) == Json(expected) );
+		},
+
+		test_split_into_chunks_equal_to_string_length: function() {
+			let expected = ["apple"];
+			let actual = split_string("apple", 5);
+			assert( Json(actual) == Json(expected) );
+		},
+
+		test_split_into_chunks_greater_than_string_length: function() {
+			let expected = ["apple"];
+			let actual = split_string("apple", 10);
+			assert( Json(actual) == Json(expected) );
+		},
+
+		test_split_into_chunks_with_negative_size: function() {
+			let expected = [];
+			let actual = split_string("apple", -1);
+			assert( Json(actual) == Json(expected) );
+		}
+	
+		
+
+
+	};
+
 
 	// Test cases (runs):
-	for (var testCase in testCases) {
-		testCases[testCase](testDir);		
+	for (var testCase in workWithFilesTestCases) {
+		workWithFilesTestCases[testCase](testDir);		
 	}
+	for (var testCase in workWithStringsTestCases) {
+		workWithStringsTestCases[testCase]();		
+	}
+	
 
 	global.log("TESTS OK.");
 }
