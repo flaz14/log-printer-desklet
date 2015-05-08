@@ -1,9 +1,9 @@
 {
     "logBoxWidth": {
-        "default": 1680,
+        "default": 1675,
         "type": "spinbutton",
         "min": 100,
-        "max": 1680,
+        "max": 1675,
         "step": 25,
         "description": "Width:",
         "units": "pixels"

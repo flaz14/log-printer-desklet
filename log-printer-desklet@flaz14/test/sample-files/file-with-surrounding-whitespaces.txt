@@ -1,0 +1,2 @@
+usual line
+	line with surrounding whitespaces     

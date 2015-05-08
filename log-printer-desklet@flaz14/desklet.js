@@ -8,7 +8,7 @@ const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
 const Settings = imports.ui.settings;
 
-const PIXELS_PER_SYMBOL_HORIZONTAL = 8;
+const PIXELS_PER_SYMBOL_HORIZONTAL = 8.4;
 const PIXELS_PER_SYMBOL_VERTICAL = 17.1;
 
 ////////////////////////// Core functions //////////////////////////
@@ -26,9 +26,12 @@ function read_lines_from_data_stream(dataStream) {
 		if (currentLine[0] == null) {
 			break;	
 		}
-		let withoutTrailingSymbol = currentLine.slice(0, currentLine.length - 1);
-		let pureJavascriptString = new String(withoutTrailingSymbol);		
-		allLines.push(pureJavascriptString);		
+		let withoutTrailingSymbol = new String(currentLine.slice(0, currentLine.length - 1));
+		let withoutSurroundingWhitespaces = withoutTrailingSymbol.trim();
+		if ( withoutSurroundingWhitespaces.length == 0 )
+			continue;
+		let niceString = withoutSurroundingWhitespaces;		
+		allLines.push(niceString);		
 	}
 	return allLines;
 }
@@ -109,20 +112,19 @@ LogPrinterDesklet.prototype = {
 		this.screen = new Screen(widthInSymbols, heightInSymbols);
 		
 		// open log file to be displayed
-//		this._dataStream = open_data_stream("/home/yura/Temp/test3.txt");
 		this._dataStream = open_data_stream("/var/log/syslog");
 		
 		this.setupUI();
 	},
 
-	setupUI: function() {		
+	setupUI: function() {	
 		this._logBox = new St.BoxLayout( {width: this._widthInPixels, height: this._heightInPixels, style_class: "log-box"} );
 	
 		this._logText = new St.Label({style_class: "log-text"});
 
 		this._logBox.add_actor(this._logText);
 		this.setContent(this._logBox);
-		
+	
 		this._updateLoop();
 	},
 
@@ -202,7 +204,22 @@ function run_tests(testDir) {
 			// the rest of file should be empty
 			let actual = read_lines_from_data_stream(dataStream);
 			assert( Json(actual) ===  Json(expected) );
+		},
+
+		test_ignore_whitespace_lines: function(testDir) {
+			let expected = ["first line", "third line"];
+			let dataStream = open_data_stream(testDir + "file-with-whitespace-line.txt");
+			let actual = read_lines_from_data_stream(dataStream);
+			assert( Json(actual) ===  Json(expected) );		
+		},
+		
+		test_ignore_surrounding_whitespaces: function(testDir) {
+			let expected = ["usual line", "line with surrounding whitespaces"];
+			let dataStream = open_data_stream(testDir + "file-with-surrounding-whitespaces.txt");
+			let actual = read_lines_from_data_stream(dataStream);
+			assert( Json(actual) ===  Json(expected) );		
 		}
+		
 	};
 
 	let test_split_string = {
