@@ -56,11 +56,15 @@ function split_string(string, chunkLength) {
 	return chunks;
 }
 
+function check_matching_to_regex(string, pattern) {
+	return new RegExp(pattern).test(string);
+}
 ////////////////////////// Core classes //////////////////////////
 function Screen(width, height) {
 	this.width = width;
 	this.height = height;
 	this.lines = [];
+	this.filter = null;
 
 	this.getText = function() {
 		let text = "";
@@ -71,15 +75,36 @@ function Screen(width, height) {
 	}
 
 	this.addLines = function(newStrings) {
+		let stringsAfterFilter = [];
+		if (this.filter != null) {
+			for(let index = 0; index < newStrings.length; index++) {
+				let currentString = newStrings[index];
+				if ( !this.filter.test(currentString) )
+					stringsAfterFilter.push(currentString);
+			}
+		} else 
+			stringsAfterFilter = newStrings;
 		let splittedLines = [];
-		for(let index = 0; index < newStrings.length; index++) {
-			let currentSplittedLine = split_string(newStrings[index], this.width);
+		for(let index = 0; index < stringsAfterFilter.length; index++) {
+			let currentSplittedLine = split_string(stringsAfterFilter[index], this.width);
 			splittedLines = splittedLines.concat(currentSplittedLine);
 		}
 		this.lines = this.lines.concat(splittedLines);
 		if ( this.lines.length > this.height ) {
 			this.lines = this.lines.slice( -this.height);
 		}
+	}
+
+	this.setFilter = function(filter) {
+		this.filter = filter;
+	}
+}
+
+function RegexFilter(pattern) {
+	this.pattern = pattern;
+
+	this.test = function(string) {
+		return new RegExp(this.pattern).test(string);
 	}
 }
 
@@ -108,8 +133,11 @@ LogPrinterDesklet.prototype = {
 		this._heightInPixels = this.settings.getValue("logBoxHeight");
 		let widthInSymbols = parseInt(this._widthInPixels / PIXELS_PER_SYMBOL_HORIZONTAL);
 		let heightInSymbols = parseInt(this._heightInPixels / PIXELS_PER_SYMBOL_VERTICAL);
-		
+		// get regex filter pattern
+		let pattern = this.settings.getValue("useRegexFilter") == true ? this.settings.getValue("regexPattern") : null;
+				
 		this.screen = new Screen(widthInSymbols, heightInSymbols);
+		this.screen.setFilter(new RegexFilter(pattern));
 		
 		// open log file to be displayed
 		this._dataStream = open_data_stream("/var/log/syslog");
@@ -272,7 +300,7 @@ function run_tests(testDir) {
 		}
 	};
 
-	let test_screen = {
+	let test_Screen = {
 		test_get_text_from_clear_screen: function() {
 			let expected = "";
 			let screen = new Screen(50, 6);
@@ -351,9 +379,36 @@ function run_tests(testDir) {
 			let screen = new Screen(4, 5);
 			screen.addLines( ["The quick brown fox jumps over the lazy dog."] );
 			let actual = screen.getText();
-			global.log(">>>>> " + actual);
 			assert( Json(actual) == Json(expected) );	
 		}
+	};
+
+	let test_RegexFilter = {
+		test_pattern_is_impty: function() {
+			let filter = new RegexFilter("");
+			let accepted = filter.test("apple");
+			assert( accepted );
+		},
+
+		test_string_is_empty: function() {
+			let filter = new RegexFilter("abc");
+			let accepted = filter.test("");
+			assert( !accepted );
+		},
+
+		test_with_complex_pattern: function() {
+			let filter = new RegexFilter("kernel:.*\[UFW BLOCK\].*DST=224\.0\.0\.1");
+			let accepted = filter.test("May  9 17:00:43 athlonx2 kernel: [46769.866007] [UFW BLOCK] IN=eth0 OUT= MAC=01:04:bb:00:38:d5:c4:7c:1f:44:12:e0:08:08 SRC=192.168.1.1 DST=224.0.0.1 LEN=28 TOS=0x00 PREC=0x00 TTL=1 ID=21685 PROTO=2");
+			assert( accepted );
+		},
+
+		test_another_complex_pattern: function() {
+			let filter = new RegexFilter("kernel:.*USB");
+			let accepted = filter.test("May  9 17:08:42 athlonx2 kernel: [47248.276705] usb-storage 1-9:1.0: USB Mass Storage device detected");
+			assert( accepted );
+		}
+
+		
 	};
 
 	let test_scroll_screen = {};
@@ -365,8 +420,11 @@ function run_tests(testDir) {
 	for (var testCase in test_split_string) {
 		test_split_string[testCase]();		
 	}
-	for (var testCase in test_screen) {
-		test_screen[testCase]();		
+	for (var testCase in test_Screen) {
+		test_Screen[testCase]();		
+	}
+	for (var testCase in test_RegexFilter) {
+		test_RegexFilter[testCase]();
 	}		
 
 	global.log("TESTS OK.");

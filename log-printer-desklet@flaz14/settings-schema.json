@@ -17,6 +17,20 @@
         "description": "Height:",
         "units": "pixels",
         "step": 25
-    }
+    },
+
+	"useRegexFilter": {
+		"description": "Use regular expression to supress unwanted lines",
+		"type": "checkbox",
+		"default": false
+	},
+
+	"regexPattern": {
+		"description": "",
+		"type": "entry",
+		"default": "kernel:.*\\[UFW BLOCK\\].*DST=224\\.0\\.0\\.1",
+		"tooltip": "Type JavaScript regular expresssion pattern here. It will be used as it is. Each line that doesn't match to this expression will not be printed.",
+		"dependency": "useRegexFilter"
+	}
 }
 
