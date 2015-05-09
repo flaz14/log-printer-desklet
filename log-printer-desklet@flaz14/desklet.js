@@ -414,23 +414,24 @@ function run_tests(testDir) {
 	let test_scroll_screen = {};
 	
 	// Test cases (runs):
-	for (var testCase in test_read_lines_from_data_stream) {
-		test_read_lines_from_data_stream[testCase](testDir);		
-	}
-	for (var testCase in test_split_string) {
-		test_split_string[testCase]();		
-	}
-	for (var testCase in test_Screen) {
-		test_Screen[testCase]();		
-	}
-	for (var testCase in test_RegexFilter) {
-		test_RegexFilter[testCase]();
-	}		
+	runTestCases(test_read_lines_from_data_stream, testDir);
+	runTestCases(test_split_string);
+	runTestCases(test_Screen);
+	runTestCases(test_RegexFilter);
 
 	global.log("TESTS OK.");
 }
 
 ////////////////////////// Utility functions //////////////////////////
+
+// Runs all test cases which are contained in 'testSuite' with specified parameters.
+function runTestCases(testSuite, parameters = null) {
+	for (var testCase in testSuite)
+		if (parameters != null) 
+			testSuite[testCase](parameters);
+		else 
+			testSuite[testCase]();						
+}
 
 // Converts object into JSON string.
 function Json(obj) {
