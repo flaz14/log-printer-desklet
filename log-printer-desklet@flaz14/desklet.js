@@ -12,6 +12,9 @@ const PIXELS_PER_SYMBOL_HORIZONTAL = 8.4;
 const PIXELS_PER_SYMBOL_VERTICAL = 17.1;
 
 ////////////////////////// Core functions //////////////////////////
+// Opens file with given name as data stream (in terms of GNOME IO library).
+// Path may be relational or absolute. But be aware that current working directory 
+// is related to Cinnamon desklet environment. So the absolute path is preffered.
 function open_data_stream(filename) {
 	let file = Gio.file_new_for_path(filename);
 	let inputStream = file.read(null);
@@ -19,6 +22,9 @@ function open_data_stream(filename) {
 	return dataStream;
 }
 
+// Reads lines from given data stream until the end of file is reached.
+// Deletes starting and ending whitespaces in each string.
+// Returns resulting strings as array.
 function read_lines_from_data_stream(dataStream) {
 	let allLines = new Array();
 	while (true) {
@@ -36,6 +42,7 @@ function read_lines_from_data_stream(dataStream) {
 	return allLines;
 }
 
+// Splits string into chunks of length specified by 'chunkLength' parameter.
 function split_string(string, chunkLength) {
 	if (chunkLength <= 0) 
 		return [];
@@ -56,10 +63,10 @@ function split_string(string, chunkLength) {
 	return chunks;
 }
 
-function check_matching_to_regex(string, pattern) {
-	return new RegExp(pattern).test(string);
-}
 ////////////////////////// Core classes //////////////////////////
+
+// Represents virtual text screen. When total number of printed lines reaches height of the screen
+// first printed line will be lost.
 function Screen(width, height) {
 	this.width = width;
 	this.height = height;
@@ -383,7 +390,7 @@ function run_tests(testDir) {
 	};
 
 	let test_RegexFilter = {
-		test_pattern_is_impty: function() {
+		test_pattern_is_empty: function() {
 			let filter = new RegexFilter("");
 			let accepted = filter.test("apple");
 			assertEquals( true, accepted );
@@ -408,8 +415,6 @@ function run_tests(testDir) {
 		}
 
 	};
-
-	let test_scroll_screen = {};
 	
 	// Test cases (runs):
 	runTestCases(test_read_lines_from_data_stream, testDir);
@@ -436,9 +441,9 @@ function Json(obj) {
 	return JSON.stringify(obj);
 }
 
-// Checks whether 'condition' is true. 
-// If 'condition' is false then error arises. In this case running desklet will be unsuccessful.
-// Code is copied and pasted from Stackoverflow (http://stackoverflow.com/questions/15313418/javascript-assert).
+// Compares two objects (by representing them in JSON). If objects are not equal (appropriate JSON strings are not equal)
+// then error arises. In this case desklet running will fail.
+// Code is almost copied and pasted from Stackoverflow (http://stackoverflow.com/questions/15313418/javascript-assert).
 function assertEquals(actual, expected, message = "") {
 	let actualJson = Json(actual);
 	let expectedJson = Json(expected);
