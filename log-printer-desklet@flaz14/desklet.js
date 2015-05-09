@@ -183,14 +183,14 @@ function run_tests(testDir) {
 			let expected = [];
 			let dataStream = open_data_stream(testDir + "empty-file.txt");
 			let actual = read_lines_from_data_stream(dataStream);
-			assert( Json(actual) ===  Json(expected));
+			assertEquals(actual, expected);
 		},
 			
 		test_read_one_line_file: function(testDir) {
 			let expected = ["This is the line."];
 			let dataStream = open_data_stream(testDir + "one-line-file.txt");
 			let actual = read_lines_from_data_stream(dataStream);
-			assert( Json(actual) ===  Json(expected) );
+			assertEquals(actual, expected);
 		},
 
 		test_skip_one_line_and_read_the_rest: function(testDir) {
@@ -205,7 +205,7 @@ function run_tests(testDir) {
 			dataStream.read_line(null);
 			// read the rest of file
 			let actual = read_lines_from_data_stream(dataStream);
-			assert( Json(actual) ===  Json(expected) );
+			assertEquals(actual, expected);
 		},
 
 		test_skip_two_line_and_read_the_rest: function(testDir) {
@@ -220,7 +220,7 @@ function run_tests(testDir) {
 			dataStream.read_line(null);
 			// read the rest and compare
 			let actual = read_lines_from_data_stream(dataStream);
-			assert( Json(actual) ===  Json(expected) );
+			assertEquals(actual, expected);
 		},
 
 		test_skip_all_lines_and_read_the_rest: function(testDir) {
@@ -231,72 +231,71 @@ function run_tests(testDir) {
 			dataStream.read_line(null);
 			// the rest of file should be empty
 			let actual = read_lines_from_data_stream(dataStream);
-			assert( Json(actual) ===  Json(expected) );
+			assertEquals(actual, expected);
 		},
 
 		test_ignore_whitespace_lines: function(testDir) {
 			let expected = ["first line", "third line"];
 			let dataStream = open_data_stream(testDir + "file-with-whitespace-line.txt");
 			let actual = read_lines_from_data_stream(dataStream);
-			assert( Json(actual) ===  Json(expected) );		
+			assertEquals(actual, expected);		
 		},
 		
 		test_ignore_surrounding_whitespaces: function(testDir) {
 			let expected = ["usual line", "line with surrounding whitespaces"];
 			let dataStream = open_data_stream(testDir + "file-with-surrounding-whitespaces.txt");
 			let actual = read_lines_from_data_stream(dataStream);
-			assert( Json(actual) ===  Json(expected) );		
-		}
-		
+			assertEquals(actual, expected);		
+		}		
 	};
 
 	let test_split_string = {
 		test_split_empty_string_into_zero_sized_chunks: function() {
 			let expected = [ ];
 			let actual = split_string("", 0);
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		},
 
 		test_split_non_empty_string_into_zero_sized_chunks: function() {
 			let expected = [ ];
 			let actual = split_string("sample string", 0)
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		},
 
 		test_split_into_chunks_2: function() {
 			let expected = ["ap", "pl", "e"];
 			let actual = split_string("apple", 2);
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		},					
 		
 		test_split_into_chunks_1: function() {
 			let expected = ["a", "p", "p", "l", "e"];
 			let actual = split_string("apple", 1);
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		}, 
 
 		test_split_into_chunks_3: function() {
 			let expected = ["app", "le"];
 			let actual = split_string("apple", 3);
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		},
 
 		test_split_into_chunks_equal_to_string_length: function() {
 			let expected = ["apple"];
 			let actual = split_string("apple", 5);
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		},
 
 		test_split_into_chunks_greater_than_string_length: function() {
 			let expected = ["apple"];
 			let actual = split_string("apple", 10);
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		},
 
 		test_split_into_chunks_with_negative_size: function() {
 			let expected = [];
 			let actual = split_string("apple", -1);
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		}
 	};
 
@@ -305,7 +304,7 @@ function run_tests(testDir) {
 			let expected = "";
 			let screen = new Screen(50, 6);
 			let actual = screen.getText();
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		}, 
 
 		test_add_one_line: function() {
@@ -313,7 +312,7 @@ function run_tests(testDir) {
 			let screen = new Screen(50, 6);
 			screen.addLines( ["one"] );
 			let actual = screen.getText();
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		},
 		
 		test_add_2_lines_from_6: function() {
@@ -321,7 +320,7 @@ function run_tests(testDir) {
 			let screen = new Screen(50, 6);
 			screen.addLines( ["one", "two"] );
 			let actual = screen.getText();
-			assert( Json(actual) == Json(expected) );
+			assertEquals(actual, expected);
 		},
 
 		test_add_5_lines_from_5: function() {
@@ -329,7 +328,7 @@ function run_tests(testDir) {
 			let screen = new Screen(50, 5);
 			screen.addLines( ["1", "2", "3", "4", "5"] );
 			let actual = screen.getText();
-			assert( Json(actual) == Json(expected) );		
+			assertEquals(actual, expected);		
 		},
 
 		test_overload_empty_screen_with_1_line: function() {
@@ -337,7 +336,7 @@ function run_tests(testDir) {
 			let screen = new Screen(50, 5);
 			screen.addLines( ["1", "2", "3", "4", "5", "6"] );
 			let actual = screen.getText();
-			assert( Json(actual) == Json(expected) );		
+			assertEquals(actual, expected);		
 		},
 		
 		test_oveload_empty_screen_with_2_lines: function() {
@@ -345,7 +344,7 @@ function run_tests(testDir) {
 			let screen = new Screen(50, 5);
 			screen.addLines( ["1", "2", "3", "4", "5", "6", "7"] );
 			let actual = screen.getText();
-			assert( Json(actual) == Json(expected) );							
+			assertEquals(actual, expected);							
 		},
 
 		test_oveload_non_empty_screen_with_3_lines: function() {
@@ -354,7 +353,7 @@ function run_tests(testDir) {
 			screen.addLines( ["1", "2", "3", "4", "5"] );
 			screen.addLines( ["6", "7", "8"] );
 			let actual = screen.getText();
-			assert( Json(actual) == Json(expected) );							
+			assertEquals(actual, expected);							
 		},
 		
 		test_overload_screen_with_many_lines: function() {
@@ -363,7 +362,7 @@ function run_tests(testDir) {
 			screen.addLines( ["1", "2", "3"] );
 			screen.addLines( ["4", "5", "6"] );
 			let actual = screen.getText();
-			assert( Json(actual) == Json(expected) );									
+			assertEquals(actual, expected);									
 		}, 
 
 		test_add_lines_which_should_be_splitted: function() {
@@ -371,7 +370,7 @@ function run_tests(testDir) {
 			let screen = new Screen(4, 5);
 			screen.addLines( ["apple", "orange", "lime"] );
 			let actual = screen.getText();
-			assert( Json(actual) == Json(expected) );	
+			assertEquals(actual, expected);	
 		},
 
 		test_add_lines_which_should_be_splitted_just_another_case: function() {
@@ -379,7 +378,7 @@ function run_tests(testDir) {
 			let screen = new Screen(4, 5);
 			screen.addLines( ["The quick brown fox jumps over the lazy dog."] );
 			let actual = screen.getText();
-			assert( Json(actual) == Json(expected) );	
+			assertEquals(actual, expected);	
 		}
 	};
 
@@ -387,28 +386,27 @@ function run_tests(testDir) {
 		test_pattern_is_impty: function() {
 			let filter = new RegexFilter("");
 			let accepted = filter.test("apple");
-			assert( accepted );
+			assertEquals( true, accepted );
 		},
 
 		test_string_is_empty: function() {
 			let filter = new RegexFilter("abc");
 			let accepted = filter.test("");
-			assert( !accepted );
+			assertEquals( false, accepted );
 		},
 
 		test_with_complex_pattern: function() {
 			let filter = new RegexFilter("kernel:.*\[UFW BLOCK\].*DST=224\.0\.0\.1");
 			let accepted = filter.test("May  9 17:00:43 athlonx2 kernel: [46769.866007] [UFW BLOCK] IN=eth0 OUT= MAC=01:04:bb:00:38:d5:c4:7c:1f:44:12:e0:08:08 SRC=192.168.1.1 DST=224.0.0.1 LEN=28 TOS=0x00 PREC=0x00 TTL=1 ID=21685 PROTO=2");
-			assert( accepted );
+			assertEquals( true, accepted );
 		},
 
 		test_another_complex_pattern: function() {
 			let filter = new RegexFilter("kernel:.*USB");
 			let accepted = filter.test("May  9 17:08:42 athlonx2 kernel: [47248.276705] usb-storage 1-9:1.0: USB Mass Storage device detected");
-			assert( accepted );
+			assertEquals( true, accepted );
 		}
 
-		
 	};
 
 	let test_scroll_screen = {};
@@ -441,13 +439,16 @@ function Json(obj) {
 // Checks whether 'condition' is true. 
 // If 'condition' is false then error arises. In this case running desklet will be unsuccessful.
 // Code is copied and pasted from Stackoverflow (http://stackoverflow.com/questions/15313418/javascript-assert).
-function assert(condition, message) {
-    if (!condition) {
-        message = message || "Assertion failed";
+function assertEquals(actual, expected, message = "") {
+	let actualJson = Json(actual);
+	let expectedJson = Json(expected);
+	
+    if ( !(actualJson == expectedJson) ) {
+        let fullMessage = "Assertion failed. Expected: " + expectedJson + ". But got: " + actualJson + ". " + message;
         if (typeof Error !== "undefined") {
-            throw new Error(message);
+            throw new Error(fullMessage);
         }
-        throw message; // Fallback
+        throw fullMessage; // Fallback
     }
 }
 
