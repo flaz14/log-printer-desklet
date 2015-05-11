@@ -25,7 +25,7 @@ const MAX_REGEX_PATTERNS = 5;
 // Opens file with given name as data stream (in terms of GNOME IO library).
 // Path may be relational or absolute. But be aware that current working directory 
 // is related to Cinnamon desklet environment. So the absolute path is preffered.
-function open_data_stream(filename) {
+function openDataStream(filename) {
 	let file = Gio.file_new_for_path(filename);
 	let inputStream = file.read(null);
 	let dataStream = Gio.DataInputStream.new(inputStream);
@@ -35,7 +35,7 @@ function open_data_stream(filename) {
 // Reads lines from given data stream until the end of file is reached.
 // Deletes starting and ending whitespaces in each string.
 // Returns resulting strings as array.
-function read_lines_from_data_stream(dataStream) {
+function readLinesFromDataStream(dataStream) {
 	let allLines = new Array();
 	while (true) {
 		let currentLine = dataStream.read_line(null);
@@ -53,7 +53,7 @@ function read_lines_from_data_stream(dataStream) {
 }
 
 // Splits string into chunks of length specified by 'chunkLength' parameter.
-function split_string(string, chunkLength) {
+function splitString(string, chunkLength) {
 	if (chunkLength <= 0) 
 		return [];
 	if (chunkLength > string.length)
@@ -120,7 +120,7 @@ function Screen(width, height) {
 			stringsAfterFilter = newStrings;
 		let splittedLines = [];
 		for(let index = 0; index < stringsAfterFilter.length; index++) {
-			let currentSplittedLine = split_string(stringsAfterFilter[index], this.width);
+			let currentSplittedLine = splitString(stringsAfterFilter[index], this.width);
 			splittedLines = splittedLines.concat(currentSplittedLine);
 		}
 		this.lines = this.lines.concat(splittedLines);
@@ -236,7 +236,7 @@ LogPrinterDesklet.prototype = {
 	},
 
 	updateUI: function() {
-		let newLines = read_lines_from_data_stream(this._dataStream);
+		let newLines = readLinesFromDataStream(this._dataStream);
 		
 		this.screen.addLines(newLines);
 
@@ -248,7 +248,7 @@ LogPrinterDesklet.prototype = {
 		this._header.set_text(" " + fileToTrack); 
 
 		// open log file to be displayed
-		this._dataStream = open_data_stream(fileToTrack);
+		this._dataStream = openDataStream(fileToTrack);
 		this.screen = new Screen(this._widthInSymbols, this._heightInSymbols);
 		this.updateFilter();	
 		this.updateUI();
@@ -256,7 +256,6 @@ LogPrinterDesklet.prototype = {
 
 	_onTextColorChange: function() {
 		let color = textRGBToRGBA(this.settings.getValue("textColor"));
-		global.log("========== color: " + textRGBToRGBA(color));
 		this._logText.set_style( "color: " + color + ";" );
 	},
 	// handles for checkboxes "Use regular expressions patterns..."
@@ -277,8 +276,6 @@ LogPrinterDesklet.prototype = {
 	_onRegexPattern4Change: function() { this.updateFilter(); },
 
 	updateFilter: function() {
-		global.log(">>> patterns: " + getPatterns(this.settings));
-		eval("global.log(\">>>>>>>>>>>>> This is eval()\")");
 		let enabledPatterns = getPatterns(this.settings);
 		this.screen.setFilter( new RegexFilter(enabledPatterns) );
 	},
@@ -297,18 +294,18 @@ function run_tests(testDir) {
 	global.log("test directory: " + testDir)
 	
 	// Test cases (definitions):
-	let test_read_lines_from_data_stream = {  
+	let test_readLinesFromDataStream = {  
 		test_read_empty_file: function(testDir) {
 			let expected = [];
-			let dataStream = open_data_stream(testDir + "empty-file.txt");
-			let actual = read_lines_from_data_stream(dataStream);
+			let dataStream = openDataStream(testDir + "empty-file.txt");
+			let actual = readLinesFromDataStream(dataStream);
 			assertEquals(actual, expected);
 		},
 			
 		test_read_one_line_file: function(testDir) {
 			let expected = ["This is the line."];
-			let dataStream = open_data_stream(testDir + "one-line-file.txt");
-			let actual = read_lines_from_data_stream(dataStream);
+			let dataStream = openDataStream(testDir + "one-line-file.txt");
+			let actual = readLinesFromDataStream(dataStream);
 			assertEquals(actual, expected);
 		},
 
@@ -319,11 +316,11 @@ function run_tests(testDir) {
 				"The fourth line.",
 				"And the fifth line is here"
 			];
-			let dataStream = open_data_stream(testDir + "five-line-file.txt");
+			let dataStream = openDataStream(testDir + "five-line-file.txt");
 			// skip one line before use our function
 			dataStream.read_line(null);
 			// read the rest of file
-			let actual = read_lines_from_data_stream(dataStream);
+			let actual = readLinesFromDataStream(dataStream);
 			assertEquals(actual, expected);
 		},
 
@@ -333,87 +330,87 @@ function run_tests(testDir) {
 				"The fourth line.",
 				"And the fifth line is here"
 			];	
-			let dataStream = open_data_stream(testDir + "five-line-file.txt");
+			let dataStream = openDataStream(testDir + "five-line-file.txt");
 			// skip two lines before use our function
 			dataStream.read_line(null);
 			dataStream.read_line(null);
 			// read the rest and compare
-			let actual = read_lines_from_data_stream(dataStream);
+			let actual = readLinesFromDataStream(dataStream);
 			assertEquals(actual, expected);
 		},
 
 		test_skip_all_lines_and_read_the_rest: function(testDir) {
 			let expected = [ ];
-			let dataStream = open_data_stream(testDir + "two-line-file.txt");
+			let dataStream = openDataStream(testDir + "two-line-file.txt");
 			// skip two lines before use our function
 			dataStream.read_line(null);
 			dataStream.read_line(null);
 			// the rest of file should be empty
-			let actual = read_lines_from_data_stream(dataStream);
+			let actual = readLinesFromDataStream(dataStream);
 			assertEquals(actual, expected);
 		},
 
 		test_ignore_whitespace_lines: function(testDir) {
 			let expected = ["first line", "third line"];
-			let dataStream = open_data_stream(testDir + "file-with-whitespace-line.txt");
-			let actual = read_lines_from_data_stream(dataStream);
+			let dataStream = openDataStream(testDir + "file-with-whitespace-line.txt");
+			let actual = readLinesFromDataStream(dataStream);
 			assertEquals(actual, expected);		
 		},
 		
 		test_ignore_surrounding_whitespaces: function(testDir) {
 			let expected = ["usual line", "line with surrounding whitespaces"];
-			let dataStream = open_data_stream(testDir + "file-with-surrounding-whitespaces.txt");
-			let actual = read_lines_from_data_stream(dataStream);
+			let dataStream = openDataStream(testDir + "file-with-surrounding-whitespaces.txt");
+			let actual = readLinesFromDataStream(dataStream);
 			assertEquals(actual, expected);		
 		}		
 	};
 
-	let test_split_string = {
+	let test_splitString = {
 		test_split_empty_string_into_zero_sized_chunks: function() {
 			let expected = [ ];
-			let actual = split_string("", 0);
+			let actual = splitString("", 0);
 			assertEquals(actual, expected);
 		},
 
 		test_split_non_empty_string_into_zero_sized_chunks: function() {
 			let expected = [ ];
-			let actual = split_string("sample string", 0)
+			let actual = splitString("sample string", 0)
 			assertEquals(actual, expected);
 		},
 
 		test_split_into_chunks_2: function() {
 			let expected = ["ap", "pl", "e"];
-			let actual = split_string("apple", 2);
+			let actual = splitString("apple", 2);
 			assertEquals(actual, expected);
 		},					
 		
 		test_split_into_chunks_1: function() {
 			let expected = ["a", "p", "p", "l", "e"];
-			let actual = split_string("apple", 1);
+			let actual = splitString("apple", 1);
 			assertEquals(actual, expected);
 		}, 
 
 		test_split_into_chunks_3: function() {
 			let expected = ["app", "le"];
-			let actual = split_string("apple", 3);
+			let actual = splitString("apple", 3);
 			assertEquals(actual, expected);
 		},
 
 		test_split_into_chunks_equal_to_string_length: function() {
 			let expected = ["apple"];
-			let actual = split_string("apple", 5);
+			let actual = splitString("apple", 5);
 			assertEquals(actual, expected);
 		},
 
 		test_split_into_chunks_greater_than_string_length: function() {
 			let expected = ["apple"];
-			let actual = split_string("apple", 10);
+			let actual = splitString("apple", 10);
 			assertEquals(actual, expected);
 		},
 
 		test_split_into_chunks_with_negative_size: function() {
 			let expected = [];
-			let actual = split_string("apple", -1);
+			let actual = splitString("apple", -1);
 			assertEquals(actual, expected);
 		}
 	};
@@ -529,8 +526,8 @@ function run_tests(testDir) {
 	};
 	
 	// Test cases (runs):
-	runTestCases(test_read_lines_from_data_stream, testDir);
-	runTestCases(test_split_string);
+	runTestCases(test_readLinesFromDataStream, testDir);
+	runTestCases(test_splitString);
 	runTestCases(test_Screen);
 	runTestCases(test_RegexFilter);
 
