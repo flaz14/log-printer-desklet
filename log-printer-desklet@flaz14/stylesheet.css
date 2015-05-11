@@ -1,9 +1,10 @@
-.log-box {
-	background-color: transparent;
+.log-text {
+	padding: 5px;
 	color: LawnGreen;
-	padding: -5px;
+	font-family: "Monospace";
 }
 
-.log-text {
-	font-family: "Monospace";
+.header-text {
+	font-weight: bold;
+	color: White;
 }

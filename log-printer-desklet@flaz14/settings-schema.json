@@ -1,36 +1,112 @@
 {
-    "logBoxWidth": {
-        "default": 1675,
-        "type": "spinbutton",
-        "min": 100,
-        "max": 1675,
-        "step": 25,
-        "description": "Width:",
-        "units": "pixels"
-    },
-
-    "logBoxHeight": {
-        "default": 925,
-        "type": "spinbutton",
-        "min": 100,
-        "max": 1050,
-        "description": "Height:",
-        "units": "pixels",
-        "step": 25
-    },
-
-	"useRegexFilter": {
-		"description": "Use regular expression to supress unwanted lines",
-		"type": "checkbox",
-		"default": false
+	"logBoxWidth": {
+		"type": "spinbutton",
+		"default": 1675,
+		"min": 100,
+		"max": 1675,
+		"step": 25,
+		"description": "Width ",
+		"units": "pixels"
 	},
 
-	"regexPattern": {
+	"logBoxHeight": {
+		"type": "spinbutton",
+		"default": 925,
+		"min": 100,
+		"max": 1050,
+		"description": "Height ",
+		"units": "pixels",
+		"step": 25
+	},
+
+	"fileToTrack": {
+		"description": "Log file ",
+		"type": "filechooser",
+		"default": "/var/log/syslog",
+		"tooltip": "Choose the file you want to track."
+	},
+
+	"textColor": {
+		"description": "Text color ",
+		"type": "colorchooser",
+		"default": "LawnGreen",
+		"tooltip": "Choose the color of text."
+	},
+
+	"separator5": {
+		"type": "separator"
+	},
+
+	"useRegexHeader": {
+		"description": "Use regular expressions to supress unwanted lines",
+		"type": "header",
+		"tooltip": "Type JavaScript regular expresssion patterns in the fields below. Each field will be used as it is (ECMA-262). Each line that match to at least one pattern will be ignored and  will be not printed."
+	},
+
+	"useRegexFilter0": {
+		"description": "#1",
+		"type": "checkbox",
+		"default": false	
+	},
+
+	"regexPattern0": {
 		"description": "",
 		"type": "entry",
-		"default": "kernel:.*\\[UFW BLOCK\\].*DST=224\\.0\\.0\\.1",
-		"tooltip": "Type JavaScript regular expresssion pattern here. It will be used as it is. Each line that doesn't match to this expression will not be printed.",
-		"dependency": "useRegexFilter"
+		"default": "kernel:.*\\[UFW BLOCK\\].*DST=224\\.0\\.0\\.1",	
+		"dependency": "useRegexFilter0"
+	},
+
+
+	"useRegexFilter1": {
+		"description": "#2",
+		"type": "checkbox",
+		"default": false	
+	},
+
+	"regexPattern1": {
+		"description": "",
+		"type": "entry",
+		"default": "cinnamon-session",	
+		"dependency": "useRegexFilter1"
+	},
+
+	"useRegexFilter2": {
+		"description": "#3",
+		"type": "checkbox",
+		"default": false	
+	},
+
+	"regexPattern2": {
+		"description": "",
+		"type": "entry",
+		"default": "",	
+		"dependency": "useRegexFilter2"
+	},
+
+	"useRegexFilter3": {
+		"description": "#4",
+		"type": "checkbox",
+		"default": false	
+	},
+
+	"regexPattern3": {
+		"description": "",
+		"type": "entry",
+		"default": "",	
+		"dependency": "useRegexFilter3"
+	},
+
+	"useRegexFilter4": {
+		"description": "#5",
+		"type": "checkbox",
+		"default": false	
+	},
+
+	"regexPattern4": {
+		"description": "",
+		"type": "entry",
+		"default": "",	
+		"dependency": "useRegexFilter4"
 	}
 }
 
