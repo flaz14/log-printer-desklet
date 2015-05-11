@@ -17,3 +17,5 @@ install: $(FILES)
 	cp $(FILES) $(DESTDIR)
 	cp -R $(TESTDIR) $(DESTDIR)
 
+show-settings: 
+	cinnamon-settings desklets $(UUID)
