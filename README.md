@@ -9,7 +9,7 @@ Desklet for Cinnamon Desktop Environment that prints selected log file like `tai
 <img width="50%" src="https://github.com/flaz14/log-printer-desklet/blob/master/images/screenshot-settings-window.png" />
 
 ### Already implemented:
-- Selecting file that have to be tracked (if entered file name is invalid then current desklet content doesn't dissapear, printing will just be paused).
+- Selecting file that have to be tracked (if entered file name is invalid then current desklet content doesn't dissapear, printing will be just paused).
 - Filters for suppressing unwanted lines (using JavaScript regular expressions).
 
 ### Planned to be implemented:
