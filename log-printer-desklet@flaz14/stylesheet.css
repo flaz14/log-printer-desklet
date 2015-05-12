@@ -7,8 +7,10 @@
 .header-label {
 	font-weight: bold;
 	color: White;
+	font-size: 110%;
 }
 
 .header-button {
-	font-family: "Courier"
+	font-family: "Courier";
+	font-size: 120%;
 }
