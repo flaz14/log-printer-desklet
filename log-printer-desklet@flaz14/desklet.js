@@ -20,11 +20,18 @@ const ENTRY_HANDLE_SUFFIX = "Change";
 
 const MAX_REGEX_PATTERNS = 5;
 
+// Text labels
+const WALLPAPER_MODE_ON_LABEL =     "                   Wallpaper Mode: ON ";
+const WALLPAPER_MODE_OFF_LABEL =    "                   Wallpaper Mode: OFF";
+const FILTERS_IN_USE_LABEL_PREFIX = "                   Filters in use: ";
+
+
 ////////////////////////// Core functions //////////////////////////
 
 // Opens file with given name as data stream (in terms of GNOME IO library).
-// Path may be relational or absolute. But be aware that current working directory 
+// Path to file may be relational or absolute. But be aware that current working directory 
 // is related to Cinnamon desklet environment. So the absolute path is preffered.
+// File is opened in 'read' mode;
 function openDataStream(filename) {
 	let file = Gio.file_new_for_path(filename);
 	let inputStream = file.read(null);
@@ -39,9 +46,11 @@ function readLinesFromDataStream(dataStream) {
 	let allLines = new Array();
 	while (true) {
 		let currentLine = dataStream.read_line(null);
+		// check for end of the file
 		if (currentLine[0] == null) {
 			break;	
 		}
+		// ommit trainling symbol (such as '\n' and so on) and delete surrounding whitespace characters
 		let withoutTrailingSymbol = new String(currentLine.slice(0, currentLine.length - 1));
 		let withoutSurroundingWhitespaces = withoutTrailingSymbol.trim();
 		if ( withoutSurroundingWhitespaces.length == 0 )
@@ -67,12 +76,14 @@ function splitString(string, chunkLength) {
 			prevChunkEndIndex = index;
 		}
 	}
+	// don't forget about last chunk
 	let lastChunk = string.slice(prevChunkEndIndex, string.length);
 	if (lastChunk.length > 0)
 		chunks.push(lastChunk);
 	return chunks;
 }
 
+// Analyzes desklet's settings and returns array of enabled (marked checkboxes) regular expressions patterns.
 function getPatterns(settings) {
 	let allPatterns = [];
 	for(let currentPatternIndex = 0; currentPatternIndex < MAX_REGEX_PATTERNS; currentPatternIndex++ ) {
@@ -83,14 +94,14 @@ function getPatterns(settings) {
 		let isCurrentPatternEnabled = settings.getValue(currentPatternStateField);
 		let currentPatternValue = settings.getValue(currentPatternValueField);
 		// examine pattern: empty pattern matches to any line, so reject empty patterns;
-		// also reject patterns which consist of whitespace characters 
-		// (because they are unvisible in settings window)
+		// also reject patterns which consist of only whitespace characters 
+		// (they are unvisible in settings window and may lead to misunderstanding)
 		if ( currentPatternValue.trim().length == 0 )
 			continue;
 		if (isCurrentPatternEnabled) 
 			allPatterns.push(currentPatternValue);
 	
-	}	
+	}
 	return allPatterns;
 }
 
@@ -99,12 +110,15 @@ function getPatterns(settings) {
 
 // Represents virtual text screen. When total number of printed lines reaches height of the screen
 // first printed line will be lost.
+// Lines can be wrapped to fit screen width.
 function Screen(width, height) {
 	this.width = width;
 	this.height = height;
 	this.lines = [];
 	this.filter = null;
 
+	// Returns content of the screen (where lines are wrapped and total number of lines is 
+	// limited to screen width).
 	this.getText = function() {
 		let text = "";
 		for(let index = 0; index < this.lines.length; index++) {
@@ -113,6 +127,8 @@ function Screen(width, height) {
 		return text;
 	}
 
+	// Adds lines to the virtual screen. Also filters lines using regular expressions filter
+	// (see setFilter() method for details).
 	this.addLines = function(newStrings) {
 		let stringsAfterFilter = [];
 		if (this.filter != null) {
@@ -134,17 +150,21 @@ function Screen(width, height) {
 		}
 	}
 
+	// Sets filter which will be used to separate unucessary lines.
 	this.setFilter = function(filter) {
 		this.filter = filter;
 	}
 }
 
+// Helper class for holding regular expressions patterns (specified by 'patterns' array)
+// and matching strings to them.
 function RegexFilter(patterns) {
 	this.filters = []
 	for(let index = 0; index < patterns.length; index++) {
 		this.filters.push(new RegExp(patterns[index]));
 	}
 	
+	// Returns 'true' if at least one pattern matches to given line.
 	this.test = function(string) {
 		for(let index = 0; index < this.filters.length; index++) {
 			if ( this.filters[index].test(string) )
@@ -162,7 +182,10 @@ function disableDeskletDragging(desklet) {
 function enableDeskletDragging(desklet) {
 	desklet._draggable.inhibit = false;
 }
+
+
 ////////////////////////// Running Desklet code //////////////////////////
+
 function main(metadata, desklet_id) {
 	return new LogPrinterDesklet(metadata, desklet_id);
 }
@@ -223,7 +246,7 @@ LogPrinterDesklet.prototype = {
 
 		// determine location of test directory and run tests 
 		let testDir = GLib.get_home_dir() + "/.local/share/cinnamon/desklets/" + this.metadata.uuid + "/test/sample-files/"
-		run_tests(testDir);
+		allTests(testDir);
 
 		// calculate size of virtual screens (from width and height in pixels to width and height in symbols)
 		this._widthInPixels = this.settings.getValue("logBoxWidth");
@@ -283,11 +306,11 @@ LogPrinterDesklet.prototype = {
 
 	_onWallpaperModeChange: function() {
 		if ( this.settings.getValue("wallpaperMode") ) {	
-			this._wallpaperModeLabel.set_text("                   Wallpaper Mode: ON ");
+			this._wallpaperModeLabel.set_text(WALLPAPER_MODE_ON_LABEL);
 			disableDeskletDragging(this);
 			this._menu.connect("open-state-changed", Lang.bind(this, this._onContextMenuStub));
 		} else {
-			this._wallpaperModeLabel.set_text("                   Wallpaper Mode: OFF");
+			this._wallpaperModeLabel.set_text(WALLPAPER_MODE_OFF_LABEL);
 			enableDeskletDragging(this);
 			this._menu.actor.disconnect(this._onContextMenuStub);
 		}	
@@ -308,6 +331,7 @@ LogPrinterDesklet.prototype = {
 		let color = textRGBToRGBA(this.settings.getValue("textColor"));
 		this._logText.set_style( "color: " + color + ";" );
 	},
+
 	// handles for checkboxes "Use regular expressions patterns..."
 	// #1
 	_onUseRegexFilter0Change: function() { this.updateFilter(); },
@@ -329,19 +353,18 @@ LogPrinterDesklet.prototype = {
 		let enabledPatterns = getPatterns(this.settings);
 		this.screen.setFilter( new RegexFilter(enabledPatterns) );
 		// update text 'Filters in use: ...' at the header of desklet
-		let filtersInUseText = "                   Filters in use: " + enabledPatterns.length;
+		let filtersInUseText = FILTERS_IN_USE_LABEL_PREFIX + enabledPatterns.length;
 		this._regexFiltersInUseLabel.set_text(filtersInUseText);
 	},
 
 	_updateLoop: function() {
 		this.updateUI()
-
 		Mainloop.timeout_add(1000, Lang.bind(this, this._updateLoop));
 	}	
 }
 
 ////////////////////////// Running Tests code //////////////////////////
-function run_tests(testDir) {
+function allTests(testDir) {
 	// Print debug information:
 	global.log("RUNNING TESTS...");
 	global.log("test directory: " + testDir)
@@ -586,6 +609,7 @@ function run_tests(testDir) {
 
 	global.log("TESTS OK.");
 }
+
 
 ////////////////////////// Utility functions //////////////////////////
 
