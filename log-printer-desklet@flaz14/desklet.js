@@ -82,6 +82,11 @@ function getPatterns(settings) {
 		// get settings for current pattern
 		let isCurrentPatternEnabled = settings.getValue(currentPatternStateField);
 		let currentPatternValue = settings.getValue(currentPatternValueField);
+		// examine pattern: empty pattern matches to any line, so reject empty patterns;
+		// also reject patterns which consist of whitespace characters 
+		// (because they are unvisible in settings window)
+		if ( currentPatternValue.trim().length == 0 )
+			continue;
 		if (isCurrentPatternEnabled) 
 			allPatterns.push(currentPatternValue);
 	
