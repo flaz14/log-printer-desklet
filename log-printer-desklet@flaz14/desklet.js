@@ -229,14 +229,19 @@ LogPrinterDesklet.prototype = {
 		this.screen = new Screen(this._widthInSymbols, this._heightInSymbols);
 		
 		this.setupUI();
-
 	},
 
 	setupUI: function() {
 		this._window = new St.BoxLayout({vertical: true, width: this._widthInPixels, height: this._heightInPixels});
 		
-		this._header = new St.Label( {style_class: "header-text"} );
-		this._window.add(this._header);
+		this._headerBox = new St.BoxLayout( {vertical: false} ) ;
+		this._fileToTrackLabel = new St.Label( {style_class: "header-label"} );
+		this._wallpaperModeLabel = new St.Label( {style_class: "header-button"} );
+		this._regexFiltersInUseLabel = new St.Label( {style_class: "header-button"} );
+		this._headerBox.add(this._fileToTrackLabel);
+		this._headerBox.add(this._wallpaperModeLabel);
+		this._headerBox.add(this._regexFiltersInUseLabel);
+		this._window.add(this._headerBox);
 	
 		this._logText = new St.Label({style_class: "log-text"});
 		this._logBox = new St.BoxLayout();
@@ -273,17 +278,19 @@ LogPrinterDesklet.prototype = {
 
 	_onWallpaperModeChange: function() {
 		if ( this.settings.getValue("wallpaperMode") ) {	
+			this._wallpaperModeLabel.set_text("                   Wallpaper Mode: ON ");
 			disableDeskletDragging(this);
 			this._menu.connect("open-state-changed", Lang.bind(this, this._onContextMenuStub));
 		} else {
+			this._wallpaperModeLabel.set_text("                   Wallpaper Mode: OFF");
 			enableDeskletDragging(this);
-			this._menu.disconnectAll();
+			this._menu.actor.disconnect(this._onContextMenuStub);
 		}	
 	},
 	
 	_onFileToTrackChange: function() {
 		let fileToTrack = this.settings.getValue("fileToTrack");
-		this._header.set_text(" " + fileToTrack); 
+		this._fileToTrackLabel.set_text(" " + fileToTrack); 
 
 		// open log file to be displayed
 		this._dataStream = openDataStream(fileToTrack);
@@ -316,6 +323,9 @@ LogPrinterDesklet.prototype = {
 	updateFilter: function() {
 		let enabledPatterns = getPatterns(this.settings);
 		this.screen.setFilter( new RegexFilter(enabledPatterns) );
+		// update text 'Filters in use: ...' at the header of desklet
+		let filtersInUseText = "                   Filters in use: " + enabledPatterns.length;
+		this._regexFiltersInUseLabel.set_text(filtersInUseText);
 	},
 
 	_updateLoop: function() {

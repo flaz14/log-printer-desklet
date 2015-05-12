@@ -4,7 +4,11 @@
 	font-family: "Monospace";
 }
 
-.header-text {
+.header-label {
 	font-weight: bold;
 	color: White;
+}
+
+.header-button {
+	font-family: "Courier"
 }
