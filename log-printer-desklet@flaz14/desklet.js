@@ -150,6 +150,13 @@ function RegexFilter(patterns) {
 	}
 }
 
+function disableDeskletDragging(desklet) {
+	desklet._draggable.inhibit = true;
+}
+
+function enableDeskletDragging(desklet) {
+	desklet._draggable.inhibit = false;
+}
 ////////////////////////// Running Desklet code //////////////////////////
 function main(metadata, desklet_id) {
 	return new LogPrinterDesklet(metadata, desklet_id);
@@ -184,6 +191,14 @@ LogPrinterDesklet.prototype = {
 
 		this.settings.bindProperty(
 			Settings.BindingDirection.IN,
+			"wallpaperMode",
+			"wallpaperMode",
+			this._onWallpaperModeChange,
+			null
+		);
+
+		this.settings.bindProperty(
+			Settings.BindingDirection.IN,
 			"fileToTrack",
 			"fileToTrack",
 			this._onFileToTrackChange,
@@ -214,6 +229,7 @@ LogPrinterDesklet.prototype = {
 		this.screen = new Screen(this._widthInSymbols, this._heightInSymbols);
 		
 		this.setupUI();
+
 	},
 
 	setupUI: function() {
@@ -228,7 +244,8 @@ LogPrinterDesklet.prototype = {
 		this._window.add(this._logBox);
 
 		this.setContent(this._window);
-	
+
+		this._onWallpaperModeChange();
 		this._onFileToTrackChange();
 		this._onTextColorChange();
 		this.updateFilter();
@@ -243,6 +260,27 @@ LogPrinterDesklet.prototype = {
 		this._logText.set_text( this.screen.getText() );
 	},
 
+	// for use in "Wallpaper Mode", disables context menu
+	_onContextMenuStub: function(menu, open) {
+		// close menu immediatelly
+		menu.close();
+	},
+
+	// empty handler, when desklet is not in "Wallpaper Mode"
+	_onContextMenuEmptyHandler: function(menu, open) {
+		// do nothing, do not hamper standard behaviour
+	},
+
+	_onWallpaperModeChange: function() {
+		if ( this.settings.getValue("wallpaperMode") ) {	
+			disableDeskletDragging(this);
+			this._menu.connect("open-state-changed", Lang.bind(this, this._onContextMenuStub));
+		} else {
+			enableDeskletDragging(this);
+			this._menu.disconnectAll();
+		}	
+	},
+	
 	_onFileToTrackChange: function() {
 		let fileToTrack = this.settings.getValue("fileToTrack");
 		this._header.set_text(" " + fileToTrack); 

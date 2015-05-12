@@ -1,4 +1,11 @@
 {
+	"wallpaperMode": {
+		"description": "Wallpaper Mode",
+		"type": "checkbox",
+		"default": false,
+		"tooltip": "Enables or disables so called Wallpaper Mode (in this mode desklet will not respond on its dragging and right mouse button clicks)"
+	},
+	
 	"logBoxWidth": {
 		"type": "spinbutton",
 		"default": 1675,
