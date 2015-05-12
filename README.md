@@ -11,5 +11,8 @@ Desklet for Cinnamon Desktop Environment that prints selected log file like `tai
 
 ### To be implemented:
 - Resizing desklet.
+- Option to wrap lines or not.
+- Clear log area.
+- Switching to default settings.
 - Scrolling up to history, optional horizontal scrolling.
 - User-defined color schemes (using JavaScript regular expressions).
