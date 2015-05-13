@@ -6,7 +6,7 @@
 		"tooltip": "Enables or disables so called Wallpaper Mode (in this mode desklet will not respond on its dragging and right mouse button clicks)"
 	},
 	
-	"logBoxWidth": {
+	"deskletWidth": {
 		"type": "spinbutton",
 		"default": 1675,
 		"min": 100,
@@ -16,7 +16,7 @@
 		"units": "pixels"
 	},
 
-	"logBoxHeight": {
+	"deskletHeight": {
 		"type": "spinbutton",
 		"default": 925,
 		"min": 100,

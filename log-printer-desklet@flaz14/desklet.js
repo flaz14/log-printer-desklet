@@ -117,6 +117,20 @@ function Screen(width, height) {
 	this.lines = [];
 	this.filter = null;
 
+
+	this.setWidth = function(width) {
+		this.width = width;
+	}
+
+	this.setHeight = function(height) {
+		this.height = height;
+	}
+
+	// Clears virtual screen (at the getText() call empty string will be returned)
+	this.clear = function() {
+		this.lines = [];
+	}
+
 	// Returns content of the screen (where lines are wrapped and total number of lines is 
 	// limited to screen width).
 	this.getText = function() {
@@ -183,7 +197,14 @@ function enableDeskletDragging(desklet) {
 	desklet._draggable.inhibit = false;
 }
 
-
+// Calculates size of virtual screen (from width and height in pixels to width and height in symbols)
+function calculateVirtualScreenSize(settings) {
+	let widthInPixels = settings.getValue("deskletWidth");
+	let heightInPixels = settings.getValue("deskletHeight");
+	let widthInSymbols = parseInt(widthInPixels / PIXELS_PER_SYMBOL_HORIZONTAL);
+	let heightInSymbols = parseInt(heightInPixels / PIXELS_PER_SYMBOL_VERTICAL) - 2;
+	return { "width": widthInSymbols, "height": heightInSymbols };
+}
 ////////////////////////// Running Desklet code //////////////////////////
 
 function main(metadata, desklet_id) {
@@ -219,6 +240,22 @@ LogPrinterDesklet.prototype = {
 
 		this.settings.bindProperty(
 			Settings.BindingDirection.IN,
+			"deskletWidth",
+			"deskletWidth",
+			this._onDeskletWidthChange,
+			null
+		);
+
+		this.settings.bindProperty(
+			Settings.BindingDirection.IN,
+			"deskletHeight",
+			"deskletHeight",
+			this._onDeskletHeightChange,
+			null
+		);
+
+		this.settings.bindProperty(
+			Settings.BindingDirection.IN,
 			"wallpaperMode",
 			"wallpaperMode",
 			this._onWallpaperModeChange,
@@ -247,20 +284,16 @@ LogPrinterDesklet.prototype = {
 		// determine location of test directory and run tests 
 		let testDir = GLib.get_home_dir() + "/.local/share/cinnamon/desklets/" + this.metadata.uuid + "/test/sample-files/"
 		allTests(testDir);
-
-		// calculate size of virtual screens (from width and height in pixels to width and height in symbols)
-		this._widthInPixels = this.settings.getValue("logBoxWidth");
-		this._heightInPixels = this.settings.getValue("logBoxHeight");
-		this._widthInSymbols = parseInt(this._widthInPixels / PIXELS_PER_SYMBOL_HORIZONTAL);
-		this._heightInSymbols = parseInt(this._heightInPixels / PIXELS_PER_SYMBOL_VERTICAL) - 2;
-
-		this.screen = new Screen(this._widthInSymbols, this._heightInSymbols);
-		
+	
 		this.setupUI();
 	},
 
 	setupUI: function() {
-		this._window = new St.BoxLayout({vertical: true, width: this._widthInPixels, height: this._heightInPixels});
+		this._window = new St.BoxLayout({ 
+			vertical: true, 
+			width: this.settings.getValue("deskletWidth"), 
+			height: this.settings.getValue("deskletHeight") 
+		});
 		
 		this._headerBox = new St.BoxLayout( {vertical: false} ) ;
 		this._fileToTrackLabel = new St.Label( {style_class: "header-label"} );
@@ -278,10 +311,19 @@ LogPrinterDesklet.prototype = {
 
 		this.setContent(this._window);
 
-		this._onWallpaperModeChange();
-		this._onFileToTrackChange();
-		this._onTextColorChange();
+
+//----------------------------------------------------------------------		
+		let screenSize = calculateVirtualScreenSize(this.settings);
+		this.screen = new Screen(screenSize.width, screenSize.height);
+		let fileToTrack = this.settings.getValue("fileToTrack");
+		this._fileToTrackLabel.set_text(" " + fileToTrack); 
+		this._dataStream = openDataStream(fileToTrack);
 		this.updateFilter();
+//----------------------------------------------------------------------
+
+		this._onWallpaperModeChange();
+		this._onTextColorChange();
+
 		this._updateLoop();
 	},
 
@@ -291,6 +333,17 @@ LogPrinterDesklet.prototype = {
 		this.screen.addLines(newLines);
 
 		this._logText.set_text( this.screen.getText() );
+	},
+
+
+	_onDeskletWidthChange: function() {
+		global.log(">>> _onDeskletWidthChange()");
+		this.updateScreenSize();
+	},
+
+	_onDeskletHeightChange: function() {
+		global.log(">>> _onDeskletHeightChange()");
+		this.updateScreenSize();
 	},
 
 	// for use in "Wallpaper Mode", disables context menu
@@ -322,8 +375,7 @@ LogPrinterDesklet.prototype = {
 
 		// open log file to be displayed
 		this._dataStream = openDataStream(fileToTrack);
-		this.screen = new Screen(this._widthInSymbols, this._heightInSymbols);
-		this.updateFilter();	
+		this.screen.clear();
 		this.updateUI();
 	},
 
@@ -355,6 +407,18 @@ LogPrinterDesklet.prototype = {
 		// update text 'Filters in use: ...' at the header of desklet
 		let filtersInUseText = FILTERS_IN_USE_LABEL_PREFIX + enabledPatterns.length;
 		this._regexFiltersInUseLabel.set_text(filtersInUseText);
+	},
+
+	updateScreenSize: function() {
+		this._window.set_width(this.settings.getValue("deskletWidth"));	
+		this._window.set_height(this.settings.getValue("deskletHeight"));	
+
+		let screenSize = calculateVirtualScreenSize(this.settings);
+		global.log(">>> new screen size: " + Json(screenSize));
+		this.screen.setWidth(screenSize.width);
+		this.screen.setHeight(screenSize.height);
+		this._onFileToTrackChange();
+		this.updateUI();	
 	},
 
 	_updateLoop: function() {
