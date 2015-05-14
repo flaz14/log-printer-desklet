@@ -10,8 +10,6 @@ const Settings = imports.ui.settings;
 
 const PIXELS_PER_SYMBOL_HORIZONTAL = 8.4;
 const PIXELS_PER_SYMBOL_VERTICAL = 17.1;
-const REGEX_STATE_FIELD_PREFIX = "useRegexFilter";
-const REGEX_VALUE_FIELD_PREFIX = "regexPattern";
 
 const CHECKBOX_HANDLE_PREFIX = "_onUseRegexFilter";
 const CHECKBOX_HANDLE_SUFFIX = "Change";
@@ -20,14 +18,26 @@ const ENTRY_HANDLE_SUFFIX = "Change";
 
 const MAX_REGEX_PATTERNS = 5;
 
-// Text labels
-const WALLPAPER_MODE_ON_LABEL =     "                   Wallpaper Mode: ON ";
-const WALLPAPER_MODE_OFF_LABEL =    "                   Wallpaper Mode: OFF";
-const FILTERS_IN_USE_LABEL_PREFIX = "                   Filters in use: ";
+// Text labels on UI elements
+const LABELS = {
+	"WALLPAPER_MODE_ON":     "                   Wallpaper Mode: ON ",
+	"WALLPAPER_MODE_OFF":    "                   Wallpaper Mode: OFF",
+	"FILTERS_IN_USE_PREFIX": "                   Filters in use: ",
+};
+
+// Names of options (corresponding to settings-schema.json)
+const OPTIONS = {
+	"DESKLET_WIDTH":           "deskletWidth",
+	"DESKLET_HEIGHT":          "deskletHeight",
+	"FILE_TO_TRACK":           "fileToTrack",
+	"TEXT_COLOR":              "textColor",
+	"WALLPAPER_MODE":          "wallpaperMode",
+	"USE_REGEX_FILTER_PREFIX": "useRegexFilter",
+	"REGEX_PATTERN_PREFIX":    "regexPattern"
+}
 
 
 ////////////////////////// Core functions //////////////////////////
-
 // Opens file with given name as data stream (in terms of GNOME IO library).
 // Path to file may be relational or absolute. But be aware that current working directory 
 // is related to Cinnamon desklet environment. So the absolute path is preffered.
@@ -88,8 +98,8 @@ function getPatterns(settings) {
 	let allPatterns = [];
 	for(let currentPatternIndex = 0; currentPatternIndex < MAX_REGEX_PATTERNS; currentPatternIndex++ ) {
 		// compose name of fields for appropriate settings (in form <string><number>)
-		let currentPatternStateField = REGEX_STATE_FIELD_PREFIX + currentPatternIndex;
-		let currentPatternValueField = REGEX_VALUE_FIELD_PREFIX + currentPatternIndex;
+		let currentPatternStateField = OPTIONS.USE_REGEX_FILTER_PREFIX + currentPatternIndex;
+		let currentPatternValueField = OPTIONS.REGEX_PATTERN_PREFIX + currentPatternIndex;
 		// get settings for current pattern
 		let isCurrentPatternEnabled = settings.getValue(currentPatternStateField);
 		let currentPatternValue = settings.getValue(currentPatternValueField);
@@ -105,9 +115,36 @@ function getPatterns(settings) {
 	return allPatterns;
 }
 
+// Disables desklet dragging.
+function disableDeskletDragging(desklet) {
+	desklet._draggable.inhibit = true;
+}
+
+// Enables desklet dragging.
+function enableDeskletDragging(desklet) {
+	desklet._draggable.inhibit = false;
+}
+
+// Calculates size of virtual screen (from width and height in pixels to width and height in symbols)
+// and returns it formed as { "width": ... , height: ... }
+function sizeInSymbols(settings) {
+	let widthInPixels = settings.getValue(OPTIONS.DESKLET_WIDTH);
+	let heightInPixels = settings.getValue(OPTIONS.DESKLET_HEIGHT);
+	let widthInSymbols = parseInt(widthInPixels / PIXELS_PER_SYMBOL_HORIZONTAL);
+	let heightInSymbols = parseInt(heightInPixels / PIXELS_PER_SYMBOL_VERTICAL) - 2;
+	return { "width": widthInSymbols, "height": heightInSymbols };
+}
+
+// Reads data from specified settings and returns desklet's size in object
+// formed as { "width": ... , height: ... }
+function sizeInPixels(settings) {
+	let widthInPixels = settings.getValue(OPTIONS.DESKLET_WIDTH);
+	let heightInPixels = settings.getValue(OPTIONS.DESKLET_HEIGHT);
+	return { "width": widthInPixels, "height": heightInPixels };
+}
+
 
 ////////////////////////// Core classes //////////////////////////
-
 // Represents virtual text screen. When total number of printed lines reaches height of the screen
 // first printed line will be lost.
 // Lines can be wrapped to fit screen width.
@@ -117,7 +154,6 @@ function Screen(width, height) {
 	this.lines = [];
 	this.filter = null;
 
-
 	this.setWidth = function(width) {
 		this.width = width;
 	}
@@ -126,7 +162,7 @@ function Screen(width, height) {
 		this.height = height;
 	}
 
-	// Clears virtual screen (at the getText() call empty string will be returned)
+	// Clears virtual screen (at the getText() call empty string will be returned).
 	this.clear = function() {
 		this.lines = [];
 	}
@@ -189,24 +225,9 @@ function RegexFilter(patterns) {
 	}
 }
 
-function disableDeskletDragging(desklet) {
-	desklet._draggable.inhibit = true;
-}
 
-function enableDeskletDragging(desklet) {
-	desklet._draggable.inhibit = false;
-}
 
-// Calculates size of virtual screen (from width and height in pixels to width and height in symbols)
-function calculateVirtualScreenSize(settings) {
-	let widthInPixels = settings.getValue("deskletWidth");
-	let heightInPixels = settings.getValue("deskletHeight");
-	let widthInSymbols = parseInt(widthInPixels / PIXELS_PER_SYMBOL_HORIZONTAL);
-	let heightInSymbols = parseInt(heightInPixels / PIXELS_PER_SYMBOL_VERTICAL) - 2;
-	return { "width": widthInSymbols, "height": heightInSymbols };
-}
-////////////////////////// Running Desklet code //////////////////////////
-
+////////////////////////// Desklet code //////////////////////////
 function main(metadata, desklet_id) {
 	return new LogPrinterDesklet(metadata, desklet_id);
 }
@@ -218,173 +239,179 @@ function LogPrinterDesklet(metadata, desklet_id) {
 LogPrinterDesklet.prototype = {
 	__proto__: Desklet.Desklet.prototype,
 
-	addHandlesForCheckboxesUseRegex: function() {
-		for(let currentCheckboxIndex = 0; currentCheckboxIndex < MAX_REGEX_PATTERNS; currentCheckboxIndex++) {
-			// compose names of property and name of handle for each checkbox
-			let checkboxState = REGEX_STATE_FIELD_PREFIX + currentCheckboxIndex;
-			let checkboxHandleName = CHECKBOX_HANDLE_PREFIX + currentCheckboxIndex + CHECKBOX_HANDLE_SUFFIX;
-			// compose names of property and name of handle for each text entry
-			let textEntryValue = REGEX_VALUE_FIELD_PREFIX + currentCheckboxIndex;
-			let textEntryHandleName = ENTRY_HANDLE_PREFIX + currentCheckboxIndex + ENTRY_HANDLE_SUFFIX;
-			// compose whole method calls and execute them via 'eval()'
-			let bindCheckboxCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + checkboxState + "\", \"" + checkboxState + "\", this." + checkboxHandleName + ", null);";
-			eval(bindCheckboxCall);
-			let bindTextEntryCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + textEntryValue + "\", \"" + textEntryValue + "\", this." + textEntryHandleName + ", null);"	
-			eval(bindTextEntryCall);
-		}
-	},
-
 	_init: function(metadata, desklet_id) {
 		Desklet.Desklet.prototype._init.call(this, metadata, desklet_id);
+
+		// run tests
+		allTests(GLib.get_home_dir() + "/.local/share/cinnamon/desklets/" + this.metadata.uuid + "/test/sample-files/");
+
+		// read settings
 		this.settings = new Settings.DeskletSettings(this, this.metadata.uuid, this.instance_id);
 
-		this.settings.bindProperty(
-			Settings.BindingDirection.IN,
-			"deskletWidth",
-			"deskletWidth",
-			this._onDeskletWidthChange,
-			null
-		);
+		// all data which is not related to Cinnamon features, but represents 
+		// domain of 'Log Printer Desklet' will be stored in Model property
+		this.Model = {};
+		
+		// all created (by ourselves) UI elements will be stored in UI property
+		this.UI = {};
 
-		this.settings.bindProperty(
-			Settings.BindingDirection.IN,
-			"deskletHeight",
-			"deskletHeight",
-			this._onDeskletHeightChange,
-			null
-		);
-
-		this.settings.bindProperty(
-			Settings.BindingDirection.IN,
-			"wallpaperMode",
-			"wallpaperMode",
-			this._onWallpaperModeChange,
-			null
-		);
-
-		this.settings.bindProperty(
-			Settings.BindingDirection.IN,
-			"fileToTrack",
-			"fileToTrack",
-			this._onFileToTrackChange,
-			null
-		);
-
-		this.settings.bindProperty(
-			Settings.BindingDirection.IN,
-			"textColor",
-			"textColor",
-			this._onTextColorChange,
-			null
-		);
-
-		// add handles for checkboxes "Use regular expressions patterns..."
-		this.addHandlesForCheckboxesUseRegex();
-
-		// determine location of test directory and run tests 
-		let testDir = GLib.get_home_dir() + "/.local/share/cinnamon/desklets/" + this.metadata.uuid + "/test/sample-files/"
-		allTests(testDir);
+		// add handlers to tracking changes of settings
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, this._onDeskletWidthChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, this._onDeskletHeightChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this._onWallpaperModeChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this._onFileToTrackChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this._onTextColorChange, null);
+		this.addHandlesForCheckboxesUseRegex(); // ... add handles for checkboxes "Use regular expressions patterns"
 	
+		// create user interface elements
 		this.setupUI();
 	},
 
 	setupUI: function() {
-		this._window = new St.BoxLayout({ 
-			vertical: true, 
-			width: this.settings.getValue("deskletWidth"), 
-			height: this.settings.getValue("deskletHeight") 
-		});
-		
-		this._headerBox = new St.BoxLayout( {vertical: false} ) ;
-		this._fileToTrackLabel = new St.Label( {style_class: "header-label"} );
-		this._wallpaperModeLabel = new St.Label( {style_class: "header-button"} );
-		this._regexFiltersInUseLabel = new St.Label( {style_class: "header-button"} );
-		this._headerBox.add(this._fileToTrackLabel);
-		this._headerBox.add(this._wallpaperModeLabel);
-		this._headerBox.add(this._regexFiltersInUseLabel);
-		this._window.add(this._headerBox);
-	
-		this._logText = new St.Label({style_class: "log-text"});
-		this._logBox = new St.BoxLayout();
-		this._logBox.add_actor(this._logText);
-		this._window.add(this._logBox);
+		// setup whole desklet size; root UI element is '_window'
+		let deskletSize = sizeInPixels(this.settings);
+		this.UI.window = new St.BoxLayout({ vertical: true, width: deskletSize.width, height: deskletSize.height });	
+		this.setContent(this.UI.window);
+		// compose header; it includes labels of currently printed file, state of Wallpaper Mode, count of used regex filters.
+		// all these labels are arranged horizontally from letf to right		
+		this.UI.headerBox = new St.BoxLayout( {vertical: false} ) ;
+		this.UI.logFileNameLabel = new St.Label( {style_class: "header-label"} );
+		this.UI.wallpaperModeLabel = new St.Label( {style_class: "header-button"} );
+		this.UI.regexFiltersInUseLabel = new St.Label( {style_class: "header-button"} );
+		this.UI.headerBox.add(this.UI.logFileNameLabel);
+		this.UI.headerBox.add(this.UI.wallpaperModeLabel);
+		this.UI.headerBox.add(this.UI.regexFiltersInUseLabel);	
+		this.UI.window.add(this.UI.headerBox);
+		// compose area where log file to be printed
+		this.UI.logText = new St.Label({style_class: "log-text"});
+		this.UI.logBox = new St.BoxLayout();
+		this.UI.logBox.add_actor(this.UI.logText);
+		this.UI.window.add(this.UI.logBox);
 
-		this.setContent(this._window);
+		// create virual screen
+		this.setupVirualScreen();
 
-
-//----------------------------------------------------------------------		
-		let screenSize = calculateVirtualScreenSize(this.settings);
-		this.screen = new Screen(screenSize.width, screenSize.height);
-		let fileToTrack = this.settings.getValue("fileToTrack");
-		this._fileToTrackLabel.set_text(" " + fileToTrack); 
-		this._dataStream = openDataStream(fileToTrack);
-		this.updateFilter();
-//----------------------------------------------------------------------
-
+		// take into accout other settings
 		this._onWallpaperModeChange();
 		this._onTextColorChange();
 
+		// start the timer that updates virtual screen
 		this._updateLoop();
 	},
 
-	updateUI: function() {
-		let newLines = readLinesFromDataStream(this._dataStream);
-		
-		this.screen.addLines(newLines);
-
-		this._logText.set_text( this.screen.getText() );
+	// Initializes virtual screen at desklet's startup.
+	setupVirualScreen: function() {
+		let screenSize = sizeInSymbols(this.settings);
+		this.Model.screen = new Screen(screenSize.width, screenSize.height);
+		let fileToTrack = this.settings.getValue(OPTIONS.FILE_TO_TRACK);
+		this.UI.logFileNameLabel.set_text(" " + fileToTrack); 
+		this.Model.dataStream = openDataStream(fileToTrack);
+		this.updateFilter();
+	},
+	
+	// Refreshes virtual screen (reads the latest lines from log file and prints them on screen).
+	refreshScreen: function() {
+		let newLines = readLinesFromDataStream(this.Model.dataStream);
+		this.Model.screen.addLines(newLines);
+		this.UI.logText.set_text( this.Model.screen.getText() );
 	},
 
+	// Timer loop (refreshes virtual screen every second).
+	_updateLoop: function() {
+		this.refreshScreen()
+		Mainloop.timeout_add(1000, Lang.bind(this, this._updateLoop));
+	}, 
 
-	_onDeskletWidthChange: function() {
-		global.log(">>> _onDeskletWidthChange()");
-		this.updateScreenSize();
-	},
+	// Tracks changing width and height of the desklet.
+	_onDeskletWidthChange: function() { this.updateScreenSize(); },
+	_onDeskletHeightChange: function() { this.updateScreenSize(); },
 
-	_onDeskletHeightChange: function() {
-		global.log(">>> _onDeskletHeightChange()");
-		this.updateScreenSize();
-	},
-
-	// for use in "Wallpaper Mode", disables context menu
+	// For use in "Wallpaper Mode", disables standard context menu (which is usualy displayed on right click).
 	_onContextMenuStub: function(menu, open) {
-		// close menu immediatelly
+		// close context menu immediatelly
 		menu.close();
 	},
 
-	// empty handler, when desklet is not in "Wallpaper Mode"
-	_onContextMenuEmptyHandler: function(menu, open) {
-		// do nothing, do not hamper standard behaviour
-	},
-
+	// Tracks enabling and disabling Wallpaper Mode (when Wallpaper Mode is going ON this functions disables
+	// some standard desklet's actions and vice versa).
 	_onWallpaperModeChange: function() {
-		if ( this.settings.getValue("wallpaperMode") ) {	
-			this._wallpaperModeLabel.set_text(WALLPAPER_MODE_ON_LABEL);
+		if ( this.settings.getValue(OPTIONS.WALLPAPER_MODE) ) {	
+			// disable desklet dragging and displaying desklet's standard context menu
 			disableDeskletDragging(this);
 			this._menu.connect("open-state-changed", Lang.bind(this, this._onContextMenuStub));
+			this.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_ON);
 		} else {
-			this._wallpaperModeLabel.set_text(WALLPAPER_MODE_OFF_LABEL);
+			// enables dragging and context menu						
+			this.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_OFF);
 			enableDeskletDragging(this);
 			this._menu.actor.disconnect(this._onContextMenuStub);
 		}	
 	},
 	
+	// Tracks changing path of the log file in Settings window.
+	// When new file name is setup then opens corresponding file, clears virtual screen and refreshes it.
 	_onFileToTrackChange: function() {
-		let fileToTrack = this.settings.getValue("fileToTrack");
-		this._fileToTrackLabel.set_text(" " + fileToTrack); 
+		let fileToTrack = this.settings.getValue(OPTIONS.FILE_TO_TRACK);
+		this.UI.logFileNameLabel.set_text(" " + fileToTrack); 
+
+		// TODO close current file
 
 		// open log file to be displayed
-		this._dataStream = openDataStream(fileToTrack);
-		this.screen.clear();
-		this.updateUI();
+		this.Model.dataStream = openDataStream(fileToTrack);
+		this.Model.screen.clear();
+		this.refreshScreen();
 	},
 
+	// Tracks changing text color
 	_onTextColorChange: function() {
-		let color = textRGBToRGBA(this.settings.getValue("textColor"));
-		this._logText.set_style( "color: " + color + ";" );
+		let color = textRGBToRGBA(this.settings.getValue(OPTIONS.TEXT_COLOR));
+		this.UI.logText.set_style( "color: " + color + ";" );
 	},
 
-	// handles for checkboxes "Use regular expressions patterns..."
+	// Reads all filters from Settings windows and setups them for the virtual screen.
+	updateFilter: function() {
+		let enabledPatterns = getPatterns(this.settings);
+		this.Model.screen.setFilter(new RegexFilter(enabledPatterns) );
+		// update text 'Filters in use: ...' at the header of desklet
+		let filtersInUseText = LABELS.FILTERS_IN_USE_PREFIX + enabledPatterns.length;
+		this.UI.regexFiltersInUseLabel.set_text(filtersInUseText);
+		this.refreshScreen();
+	},
+
+	// Changes size of virtual screen and desklet itself.
+	updateScreenSize: function() {
+		// resize whole desklet
+		let deskletSize = sizeInPixels(this.settings);
+		this.UI.window.set_width(deskletSize.width);	
+		this.UI.window.set_height(deskletSize.height);	
+		// resize virtual screen
+		let screenSize = sizeInSymbols(this.settings);
+		this.Model.screen.setWidth(screenSize.width);
+		this.Model.screen.setHeight(screenSize.height);
+		this._onFileToTrackChange();
+		// force display data in already resized screen
+		this.refreshScreen();	
+	},
+
+	// Adds handles for checkboxes for option "Use regular expressions to supress unwanted lines".
+	// We have 5 checkboxes and 5 corresponding text fields.
+	// Instead of binding handlers for each checkbox and text field by hand we bind them dinamically using eval().
+	addHandlesForCheckboxesUseRegex: function() {
+		for(let currentCheckboxIndex = 0; currentCheckboxIndex < MAX_REGEX_PATTERNS; currentCheckboxIndex++) {
+			// compose names of property and name of handle for each checkbox
+			let checkboxState = OPTIONS.USE_REGEX_FILTER_PREFIX + currentCheckboxIndex;
+			let checkboxHandleName = CHECKBOX_HANDLE_PREFIX + currentCheckboxIndex + CHECKBOX_HANDLE_SUFFIX;
+			// compose names of property and name of handle for each text entry
+			let textEntryValue = OPTIONS.REGEX_PATTERN_PREFIX + currentCheckboxIndex;
+			let textEntryHandleName = ENTRY_HANDLE_PREFIX + currentCheckboxIndex + ENTRY_HANDLE_SUFFIX;
+			// compose whole method calls and execute them via 'eval()'
+			let bindCheckboxCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + checkboxState + "\", null, this." + checkboxHandleName + ", null);";
+			eval(bindCheckboxCall);
+			let bindTextEntryCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + textEntryValue + "\", null, this." + textEntryHandleName + ", null);"	
+			eval(bindTextEntryCall);
+		}
+	},
+	// handlers for checkboxes "Use regular expressions to supress unwanted lines"
 	// #1
 	_onUseRegexFilter0Change: function() { this.updateFilter(); },
 	_onRegexPattern0Change: function() { this.updateFilter(); },
@@ -399,32 +426,7 @@ LogPrinterDesklet.prototype = {
 	_onRegexPattern3Change: function() { this.updateFilter(); },
 	// #5
 	_onUseRegexFilter4Change: function() { this.updateFilter(); },
-	_onRegexPattern4Change: function() { this.updateFilter(); },
-
-	updateFilter: function() {
-		let enabledPatterns = getPatterns(this.settings);
-		this.screen.setFilter( new RegexFilter(enabledPatterns) );
-		// update text 'Filters in use: ...' at the header of desklet
-		let filtersInUseText = FILTERS_IN_USE_LABEL_PREFIX + enabledPatterns.length;
-		this._regexFiltersInUseLabel.set_text(filtersInUseText);
-	},
-
-	updateScreenSize: function() {
-		this._window.set_width(this.settings.getValue("deskletWidth"));	
-		this._window.set_height(this.settings.getValue("deskletHeight"));	
-
-		let screenSize = calculateVirtualScreenSize(this.settings);
-		global.log(">>> new screen size: " + Json(screenSize));
-		this.screen.setWidth(screenSize.width);
-		this.screen.setHeight(screenSize.height);
-		this._onFileToTrackChange();
-		this.updateUI();	
-	},
-
-	_updateLoop: function() {
-		this.updateUI()
-		Mainloop.timeout_add(1000, Lang.bind(this, this._updateLoop));
-	}	
+	_onRegexPattern4Change: function() { this.updateFilter(); }	
 }
 
 ////////////////////////// Running Tests code //////////////////////////
@@ -635,6 +637,23 @@ function allTests(testDir) {
 			screen.addLines( ["The quick brown fox jumps over the lazy dog."] );
 			let actual = screen.getText();
 			assertEquals(actual, expected);	
+		},
+		
+		test_clear_epmty_screen: function() {
+			let expected = "";
+			let screen = new Screen(4, 5);
+			screen.clear();
+			let actual = screen.getText();
+			assertEquals(actual, expected);
+		},
+		
+		test_clear_non_epmty_screen: function() {
+			let expected = "";
+			let screen = new Screen(4, 5);
+			screen.addLines( ["This is a test", "Apple"] );
+			screen.clear();
+			let actual = screen.getText();
+			assertEquals(actual, expected);
 		}
 	};
 
