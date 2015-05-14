@@ -33,11 +33,25 @@
 		"tooltip": "Choose the file you want to track."
 	},
 
+	"wrapLines": {
+		"description": "Wrap lines",
+		"type": "checkbox",
+		"default": true,
+		"tooltip": "When not selected then each line from file will be printed without any breaks."
+	},
+
 	"textColor": {
 		"description": "Text color ",
 		"type": "colorchooser",
 		"default": "LawnGreen",
 		"tooltip": "Choose the color of text."
+	},
+
+	"clearLogButton": {
+		"description": "Clear log area",
+		"type": "button",
+		"tooltip": "Push this button if you would like to clear desklet's content.",
+		"callback": "_onClearLogButtonPressed"
 	},
 
 	"separator5": {

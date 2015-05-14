@@ -33,7 +33,8 @@ const OPTIONS = {
 	"TEXT_COLOR":              "textColor",
 	"WALLPAPER_MODE":          "wallpaperMode",
 	"USE_REGEX_FILTER_PREFIX": "useRegexFilter",
-	"REGEX_PATTERN_PREFIX":    "regexPattern"
+	"REGEX_PATTERN_PREFIX":    "regexPattern",
+	"WRAP_LINES":              "wrapLines"
 }
 
 
@@ -153,6 +154,7 @@ function Screen(width, height) {
 	this.height = height;
 	this.lines = [];
 	this.filter = null;
+	this.wrapLines = true;
 
 	this.setWidth = function(width) {
 		this.width = width;
@@ -190,10 +192,13 @@ function Screen(width, height) {
 		} else 
 			stringsAfterFilter = newStrings;
 		let splittedLines = [];
-		for(let index = 0; index < stringsAfterFilter.length; index++) {
-			let currentSplittedLine = splitString(stringsAfterFilter[index], this.width);
-			splittedLines = splittedLines.concat(currentSplittedLine);
-		}
+		if ( this.wrapLines ) {
+			for(let index = 0; index < stringsAfterFilter.length; index++) {
+				let currentSplittedLine = splitString(stringsAfterFilter[index], this.width);
+				splittedLines = splittedLines.concat(currentSplittedLine);
+			}
+		} else
+			splittedLines = stringsAfterFilter;
 		this.lines = this.lines.concat(splittedLines);
 		if ( this.lines.length > this.height ) {
 			this.lines = this.lines.slice( -this.height);
@@ -203,6 +208,14 @@ function Screen(width, height) {
 	// Sets filter which will be used to separate unucessary lines.
 	this.setFilter = function(filter) {
 		this.filter = filter;
+	}
+
+	this.enableWrapping = function() {
+		this.wrapLines = true;
+	}
+
+	this.disableWrapping = function() {
+		this.wrapLines = false;
 	}
 }
 
@@ -261,6 +274,7 @@ LogPrinterDesklet.prototype = {
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this._onWallpaperModeChange, null);
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this._onFileToTrackChange, null);
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this._onTextColorChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, this._onWrapLinesChange, null);
 		this.addHandlesForCheckboxesUseRegex(); // ... add handles for checkboxes "Use regular expressions patterns"
 	
 		// create user interface elements
@@ -303,6 +317,7 @@ LogPrinterDesklet.prototype = {
 	setupVirualScreen: function() {
 		let screenSize = sizeInSymbols(this.settings);
 		this.Model.screen = new Screen(screenSize.width, screenSize.height);
+		this.settings.getValue(OPTIONS.WRAP_LINES) ? this.Model.screen.enableWrapping() : this.Model.screen.disableWrapping();
 		let fileToTrack = this.settings.getValue(OPTIONS.FILE_TO_TRACK);
 		this.UI.logFileNameLabel.set_text(" " + fileToTrack); 
 		this.Model.dataStream = openDataStream(fileToTrack);
@@ -361,10 +376,17 @@ LogPrinterDesklet.prototype = {
 		this.refreshScreen();
 	},
 
-	// Tracks changing text color
+	// Tracks changing text color.
 	_onTextColorChange: function() {
 		let color = textRGBToRGBA(this.settings.getValue(OPTIONS.TEXT_COLOR));
 		this.UI.logText.set_style( "color: " + color + ";" );
+	},
+
+	// Tracks changing "Wrap lines" options in the Settings window.
+	_onWrapLinesChange: function() {
+		let wrapLinesState = this.settings.getValue(OPTIONS.WRAP_LINES);
+		wrapLinesState ? this.Model.screen.enableWrapping() : this.Model.screen.disableWrapping();
+		this.refresScreen();
 	},
 
 	// Reads all filters from Settings windows and setups them for the virtual screen.
@@ -390,6 +412,12 @@ LogPrinterDesklet.prototype = {
 		this._onFileToTrackChange();
 		// force display data in already resized screen
 		this.refreshScreen();	
+	},
+
+	// Handlers clicks on "Clear log area" button in Settings window.
+	_onClearLogButtonPressed: function() {
+		this.Model.screen.clear();
+		this.UI.logText.set_text("");
 	},
 
 	// Adds handles for checkboxes for option "Use regular expressions to supress unwanted lines".
@@ -653,7 +681,26 @@ function allTests(testDir) {
 			screen.clear();
 			let actual = screen.getText();
 			assertEquals(actual, expected);
+		},
+		
+		test_wrap_lines_is_disabled: function() {
+			let expected = "This is a test.\nI am the quick brown fox.\n";
+			let screen = new Screen(4, 50);
+			screen.disableWrapping();
+			screen.addLines( ["This is a test.", "I am the quick brown fox."] );
+			let actual = screen.getText();
+			assertEquals(actual, expected);
+		},
+
+		test_wrap_lines_is_enabled_explicitly: function() {
+			let expected = "This\n is \na te\nst.\nI am\n the\n qui\nck b\nrown\n fox\n.\n";
+			let screen = new Screen(4, 50);
+			screen.enableWrapping();
+			screen.addLines( ["This is a test.", "I am the quick brown fox."] );
+			let actual = screen.getText();
+			assertEquals(actual, expected);
 		}
+		
 	};
 
 	let test_RegexFilter = {
