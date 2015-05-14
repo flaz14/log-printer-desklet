@@ -4,7 +4,8 @@ FILES= 						\
 		$(UUID)/desklet.js		\
 		$(UUID)/metadata.json		\
 		$(UUID)/stylesheet.css		\
-		$(UUID)/settings-schema.json	
+		$(UUID)/settings-schema.json	\
+		$(UUID)/icon.png
 
 TESTDIR= 	$(UUID)/test					
 		
