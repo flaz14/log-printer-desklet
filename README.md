@@ -10,8 +10,6 @@ Desklet for Cinnamon Desktop Environment that prints selected log file like `tai
 <img width="50%" src="https://github.com/flaz14/log-printer-desklet/blob/master/screenshots/screenshot-settings-window.png" />
 
 ### TODO:
-- Option to wrap lines or not.
-- Clear log area.
 - Switching to default settings.
 - Scrolling up to history, optional horizontal scrolling.
 - User-defined color schemes (using JavaScript regular expressions).
