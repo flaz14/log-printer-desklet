@@ -1,4 +1,4 @@
-log-printer-desklet
+<img src="https://github.com/flaz14/log-printer-desklet/blob/master/log-printer-desklet%40flaz14/icon.png"> log-printer-desklet
 ========
 
 Desklet for Cinnamon Desktop Environment that prints selected log file like `tail -f` does it.
