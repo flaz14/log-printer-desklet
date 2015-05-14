@@ -351,10 +351,9 @@ LogPrinterDesklet.prototype = {
 	// Tracks changing path of the log file in Settings window.
 	// When new file name is setup then opens corresponding file, clears virtual screen and refreshes it.
 	_onFileToTrackChange: function() {
+		this.Model.dataStream.close(null);
 		let fileToTrack = this.settings.getValue(OPTIONS.FILE_TO_TRACK);
 		this.UI.logFileNameLabel.set_text(" " + fileToTrack); 
-
-		// TODO close current file
 
 		// open log file to be displayed
 		this.Model.dataStream = openDataStream(fileToTrack);
