@@ -1,5 +1,4 @@
-TODO
-    Option to remove desklet's decorations.
+TODO:
     Switching to default settings.
     Scrolling up to history, optional horizontal scrolling.
     User-defined color schemes (using JavaScript regular expressions).
