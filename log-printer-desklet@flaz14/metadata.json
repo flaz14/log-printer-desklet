@@ -1,6 +1,6 @@
 {
     "uuid": "log-printer-desklet@flaz14",
     "name": "Log Printer Desklet",
-    "description": "Displays log file like 'tail -f' does it.",
+    "description": "Displays selected log file like 'tail -f' does it.",
     "prevent-decorations": false
 }

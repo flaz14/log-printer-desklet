@@ -20,15 +20,16 @@ const MAX_REGEX_PATTERNS = 5;
 
 // Text labels on UI elements
 const LABELS = {
-	"WALLPAPER_MODE_ON":     "                   Wallpaper Mode: ON ",
-	"WALLPAPER_MODE_OFF":    "                   Wallpaper Mode: OFF",
-	"FILTERS_IN_USE_PREFIX": "                   Filters in use: ",
+	"WALLPAPER_MODE_ON":     "          Wallpaper Mode: ON ",
+	"WALLPAPER_MODE_OFF":    "          Wallpaper Mode: OFF",
+	"FILTERS_IN_USE_PREFIX": "          Filters in use: ",
 };
 
 // Names of options (corresponding to settings-schema.json)
 const OPTIONS = {
 	"DESKLET_WIDTH":           "deskletWidth",
 	"DESKLET_HEIGHT":          "deskletHeight",
+	"HEADER_COLOR":            "headerColor",
 	"FILE_TO_TRACK":           "fileToTrack",
 	"TEXT_COLOR":              "textColor",
 	"WALLPAPER_MODE":          "wallpaperMode",
@@ -222,7 +223,7 @@ function Screen(width, height) {
 // Helper class for holding regular expressions patterns (specified by 'patterns' array)
 // and matching strings to them.
 function RegexFilter(patterns) {
-	this.filters = []
+	this.filters = [];
 	for(let index = 0; index < patterns.length; index++) {
 		this.filters.push(new RegExp(patterns[index]));
 	}
@@ -237,7 +238,6 @@ function RegexFilter(patterns) {
 		return false;
 	}
 }
-
 
 
 ////////////////////////// Desklet code //////////////////////////
@@ -275,6 +275,7 @@ LogPrinterDesklet.prototype = {
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this._onFileToTrackChange, null);
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this._onTextColorChange, null);
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, this._onWrapLinesChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, this._onHeaderColorChange, null);
 		this.addHandlesForCheckboxesUseRegex(); // ... add handles for checkboxes "Use regular expressions patterns"
 	
 		// create user interface elements
@@ -307,6 +308,7 @@ LogPrinterDesklet.prototype = {
 
 		// take into accout other settings
 		this._onWallpaperModeChange();
+		this._onHeaderColorChange();
 		this._onTextColorChange();
 
 		// start the timer that updates virtual screen
@@ -320,12 +322,18 @@ LogPrinterDesklet.prototype = {
 		this.settings.getValue(OPTIONS.WRAP_LINES) ? this.Model.screen.enableWrapping() : this.Model.screen.disableWrapping();
 		let fileToTrack = this.settings.getValue(OPTIONS.FILE_TO_TRACK);
 		this.UI.logFileNameLabel.set_text(" " + fileToTrack); 
-		this.Model.dataStream = openDataStream(fileToTrack);
+		try {
+			this.Model.dataStream = openDataStream(fileToTrack);
+			this.Model.refreshPaused = false;
+		} catch(error) {
+			this.onFailedToOpenDataStream(fileToTrack, error);
+		}
 		this.updateFilter();
 	},
 	
 	// Refreshes virtual screen (reads the latest lines from log file and prints them on screen).
 	refreshScreen: function() {
+		if (this.Model.refreshPaused) return;
 		let newLines = readLinesFromDataStream(this.Model.dataStream);
 		this.Model.screen.addLines(newLines);
 		this.UI.logText.set_text( this.Model.screen.getText() );
@@ -366,20 +374,39 @@ LogPrinterDesklet.prototype = {
 	// Tracks changing path of the log file in Settings window.
 	// When new file name is setup then opens corresponding file, clears virtual screen and refreshes it.
 	_onFileToTrackChange: function() {
-		this.Model.dataStream.close(null);
 		let fileToTrack = this.settings.getValue(OPTIONS.FILE_TO_TRACK);
 		this.UI.logFileNameLabel.set_text(" " + fileToTrack); 
 
+		// if data stream has been correctly opened previously then close it
+		if ( !this.Model.refreshPaused ) 
+			this.Model.dataStream.close(null);
 		// open log file to be displayed
-		this.Model.dataStream = openDataStream(fileToTrack);
+		try {
+			this.Model.dataStream = openDataStream(fileToTrack);
+			this.Model.refreshPaused = false;
+		} catch(error) {
+			this.onFailedToOpenDataStream(fileToTrack, error);
+		}
 		this.Model.screen.clear();
 		this.refreshScreen();
+	},
+
+	onFailedToOpenDataStream: function(error, fileName) {
+		let errorMessage = "[ERROR] Cannot open file " + fileName + " : " + Json(error);
+		global.log(errorMessage);
+		this.Model.refreshPaused = true;
 	},
 
 	// Tracks changing text color.
 	_onTextColorChange: function() {
 		let color = textRGBToRGBA(this.settings.getValue(OPTIONS.TEXT_COLOR));
 		this.UI.logText.set_style( "color: " + color + ";" );
+	},
+
+	// Tracks changing color of the labels at the top of desklet.
+	_onHeaderColorChange: function() {
+		let color = textRGBToRGBA(this.settings.getValue(OPTIONS.HEADER_COLOR));
+		this.UI.headerBox.set_style( "color: " + color + ";" );
 	},
 
 	// Tracks changing "Wrap lines" options in the Settings window.
@@ -699,37 +726,36 @@ function allTests(testDir) {
 			screen.addLines( ["This is a test.", "I am the quick brown fox."] );
 			let actual = screen.getText();
 			assertEquals(actual, expected);
-		}
-		
+		}	
 	};
 
 	let test_RegexFilter = {
 		test_pattern_is_empty: function() {
 			let filter = new RegexFilter( [""] );
 			let accepted = filter.test("apple");
-			assertEquals( true, accepted );
+			assertEquals( accepted, true );
 		},
 
 		test_string_is_empty: function() {
 			let filter = new RegexFilter( ["abc"] );
 			let accepted = filter.test("");
-			assertEquals( false, accepted );
+			assertEquals( accepted, false );
 		},
 
 		test_with_complex_pattern: function() {
 			let filter = new RegexFilter( ["kernel:.*\[UFW BLOCK\].*DST=224\.0\.0\.1"] );
 			let accepted = filter.test("May  9 17:00:43 athlonx2 kernel: [46769.866007] [UFW BLOCK] IN=eth0 OUT= MAC=01:04:bb:00:38:d5:c4:7c:1f:44:12:e0:08:08 SRC=192.168.1.1 DST=224.0.0.1 LEN=28 TOS=0x00 PREC=0x00 TTL=1 ID=21685 PROTO=2");
-			assertEquals( true, accepted );
+			assertEquals( accepted, true );
 		},
 
 		test_another_complex_pattern: function() {
 			let filter = new RegexFilter(["kernel:.*USB"]);
 			let accepted = filter.test("May  9 17:08:42 athlonx2 kernel: [47248.276705] usb-storage 1-9:1.0: USB Mass Storage device detected");
-			assertEquals( true, accepted );
+			assertEquals( accepted, true );
 		}
 
 	};
-	
+
 	// Test cases (runs):
 	runTestCases(test_readLinesFromDataStream, testDir);
 	runTestCases(test_splitString);

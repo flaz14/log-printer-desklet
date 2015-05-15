@@ -1,27 +1,34 @@
 {
 	"sizeHeader": {
-		"description": "Desklet size",
+		"description": "Size and Heading",
 		"type": "header"
 	},	
 
 	"deskletWidth": {
-		"type": "spinbutton",
-		"default": 1675,
-		"min": 100,
-		"max": 1675,
-		"step": 25,
 		"description": "Width ",
-		"units": "pixels"
+		"type": "spinbutton",
+		"units": "pixels",
+		"min": 100,
+		"max": 1920,
+		"default": 1675,
+		"step": 25
 	},
 
 	"deskletHeight": {
-		"type": "spinbutton",
-		"default": 925,
-		"min": 100,
-		"max": 1050,
 		"description": "Height ",
+		"type": "spinbutton",
 		"units": "pixels",
+		"min": 100,
+		"max": 1080,
+		"default": 925,
 		"step": 25
+	},
+
+	"headerColor": {
+		"description": "Header color ",
+		"type": "colorchooser",
+		"default": "White",
+		"tooltip": "Choose color of labels in the header."
 	},
 
 	"separator1": {
@@ -34,7 +41,7 @@
 	},	
 
 	"wallpaperMode": {
-		"description": "Wallpaper Mode",
+		"description": "Wallpaper Mode ",
 		"type": "checkbox",
 		"default": false,
 		"tooltip": "Enables or disables so called Wallpaper Mode (in this mode desklet will not respond on its dragging and right mouse button clicks)"
@@ -64,7 +71,7 @@
 	},
 
 	"wrapLines": {
-		"description": "Wrap lines",
+		"description": "Wrap lines ",
 		"type": "checkbox",
 		"default": true,
 		"tooltip": "When not selected then each line from file will be printed without any breaks."
