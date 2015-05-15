@@ -55,7 +55,7 @@ function openDataStream(filename) {
 // Deletes starting and ending whitespaces in each string.
 // Returns resulting strings as array.
 function readLinesFromDataStream(dataStream) {
-	let allLines = new Array();
+	let allLines = [];
 	while (true) {
 		let currentLine = dataStream.read_line(null);
 		// check for end of the file
@@ -767,7 +767,6 @@ function allTests(testDir) {
 
 
 ////////////////////////// Utility functions //////////////////////////
-
 // Almost copied and pasted from https://github.com/lestcape/Sticky-Notes/blob/master/stickyNotes%40lestcape/desklet.js
 function textRGBToRGBA(textRGB) {
 	let opacity = "1.0";
