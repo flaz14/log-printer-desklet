@@ -38,6 +38,31 @@ const OPTIONS = {
 	"WRAP_LINES":              "wrapLines"
 }
 
+// Default settings (customizable in Settings window, should be synchronized with settings-schema.json). 
+// And pay attention to tricks with colors notation.
+const DEFAULTS = function() {
+	let all = {};
+	all[OPTIONS.DESKLET_WIDTH] =  800;
+	all[OPTIONS.DESKLET_HEIGHT] = 600;
+	all[OPTIONS.HEADER_COLOR] =   "rgb(255,255,255)";
+	all[OPTIONS.FILE_TO_TRACK] =  "/var/log/syslog";
+	all[OPTIONS.TEXT_COLOR] =     "rgb(124,252,0)";
+	all[OPTIONS.WALLPAPER_MODE] = false;
+	all[OPTIONS.WRAP_LINES] =     true;
+	// "Use regex filter..." checkboxes and text fields
+	all.useRegexFilter0 =         false;
+	all.regexPattern0 =           "kernel:.*\\[UFW BLOCK\\].*DST=224\\.0\\.0\\.1";
+	all.useRegexFilter1 =         false;
+	all.regexPattern1 =           "cinnamon-session";
+	all.useRegexFilter2 =         false;
+	all.regexPattern2 =           "";
+	all.useRegexFilter3 =         false;
+	all.regexPattern3 =           "";
+	all.useRegexFilter4 =         false;
+	all.regexPattern4 =           "";
+	return all;
+}();
+
 
 ////////////////////////// Core functions //////////////////////////
 // Opens file with given name as data stream (in terms of GNOME IO library).
@@ -445,6 +470,14 @@ LogPrinterDesklet.prototype = {
 	_onClearLogButtonPressed: function() {
 		this.Model.screen.clear();
 		this.UI.logText.set_text("");
+	},
+
+	// Handle clicks on "Reset to default settings" button in Settings window.
+	_onResetToDefaultsButtonPressed: function() {
+		for (let nameOfOption in DEFAULTS) {
+			let valueForCurrentOption = DEFAULTS[nameOfOption];
+			this.settings.setValue(nameOfOption, valueForCurrentOption);
+		}
 	},
 
 	// Adds handles for checkboxes for option "Use regular expressions to supress unwanted lines".

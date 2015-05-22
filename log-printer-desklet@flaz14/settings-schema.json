@@ -10,7 +10,7 @@
 		"units": "pixels",
 		"min": 100,
 		"max": 1920,
-		"default": 1675,
+		"default": 800,
 		"step": 25
 	},
 
@@ -20,7 +20,7 @@
 		"units": "pixels",
 		"min": 100,
 		"max": 1080,
-		"default": 925,
+		"default": 600,
 		"step": 25
 	},
 
@@ -158,6 +158,17 @@
 		"type": "entry",
 		"default": "",	
 		"dependency": "useRegexFilter4"
+	},
+
+	"separator_bottom": {
+		"type": "separator"
+	},	
+
+	"resetToDefaultsButton": {
+		"description": "Reset to default settings",
+		"type": "button",
+		"tooltip": "Push this button if you would like to apply default settings.",
+		"callback": "_onResetToDefaultsButtonPressed"
 	}
 }
 
