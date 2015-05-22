@@ -19,4 +19,4 @@ install: $(FILES)
 	cp -R $(TESTDIR) $(DESTDIR)
 
 show-settings: 
-	cinnamon-settings desklets $(UUID)
+	cinnamon-settings desklets $(UUID) > /dev/null 2>&1 &
