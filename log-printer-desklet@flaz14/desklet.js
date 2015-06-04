@@ -516,7 +516,7 @@ LogPrinterDesklet.prototype = {
 	_onRegexPattern4Change: function() { this.updateFilter(); }	
 }
 
-////////////////////////// Running Tests code //////////////////////////
+////////////////////////// TESTS //////////////////////////
 function allTests(testDir) {
 	// Print debug information:
 	global.log("RUNNING TESTS...");
