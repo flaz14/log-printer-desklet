@@ -6,11 +6,12 @@
 
 .header-label {
 	font-weight: bold;
-	font-size: 110%;
+	font-family: "Courier";
+	font-size: 120%;
 }
 
 .header-button {
 	font-weight: bold;
 	font-family: "Courier";
-	font-size: 110%;
+	font-size: 150%;
 }

@@ -20,9 +20,10 @@ const MAX_REGEX_PATTERNS = 5;
 
 // Text labels on UI elements
 const LABELS = {
-	"WALLPAPER_MODE_ON":     "          Wallpaper Mode: ON ",
+	"WALLPAPER_MODE_ON":     "          Wallpaper Mode: ON ⚓",
 	"WALLPAPER_MODE_OFF":    "          Wallpaper Mode: OFF",
-	"FILTERS_IN_USE_PREFIX": "          Filters in use: ",
+	"FILTERS_IN_USE_PREFIX": " ",   
+	"FILTERS_IN_USE_SUFFIX": "𐏑" 	// 𐏑 - looks like a funnel when font size is huge
 };
 
 // Names of options (corresponding to settings-schema.json)
@@ -169,6 +170,16 @@ function sizeInPixels(settings) {
 	let heightInPixels = settings.getValue(OPTIONS.DESKLET_HEIGHT);
 	return { "width": widthInPixels, "height": heightInPixels };
 }
+
+
+
+// Composes label that corresponds to the number of active regular expression filters.
+function composeRegexFiltersLabel(numberOfActiveFilters) {
+	if (numberOfActiveFilters > 0) 
+		return LABELS.FILTERS_IN_USE_PREFIX + LABELS.FILTERS_IN_USE_SUFFIX
+	return LABELS.FILTERS_IN_USE_PREFIX	
+}
+
 
 
 ////////////////////////// Core classes //////////////////////////
@@ -789,11 +800,28 @@ function allTests(testDir) {
 
 	};
 
+	let test_composeRegexFiltersLabel = {
+		test_zero_active_filters: function() {
+			let expected = " "
+			let actual = composeRegexFiltersLabel(0)
+			assertEquals(actual, expected)
+		},
+
+		test_one_active_filter: function() {
+			let expected = " 𐏑"
+			let actual = composeRegexFiltersLabel(1);
+			assertEquals(actual, expected)
+		}
+
+
+	}
+
 	// Test cases (runs):
 	runTestCases(test_readLinesFromDataStream, testDir);
 	runTestCases(test_splitString);
 	runTestCases(test_Screen);
 	runTestCases(test_RegexFilter);
+	runTestCases(test_composeRegexFiltersLabel);
 
 	global.log("TESTS OK.");
 }
