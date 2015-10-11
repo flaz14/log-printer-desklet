@@ -309,69 +309,67 @@ LogPrinterDesklet.prototype = {
 		this.EventHandlers = new function(desklet) {		
 
 			this.onWallpaperModeChange = function() {
-				log('onWallpaperModeChange')
-				log(desklet)
 				if ( desklet.settings.getValue(OPTIONS.WALLPAPER_MODE) ) {	
 					// disable desklet's dragging and displaying context menu
-					disableDeskletDragging(desklet);
-					desklet._menu.connect("open-state-changed", Lang.bind(desklet, desklet._onContextMenuStub));
-					desklet.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_ON);
+					disableDeskletDragging(desklet)
+					desklet._menu.connect("open-state-changed", Lang.bind(desklet, desklet._onContextMenuStub))
+					desklet.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_ON)
 				} else {
 					// restore default behavior
-					desklet.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_OFF);
-					enableDeskletDragging(desklet);
-					desklet._menu.actor.disconnect(desklet._onContextMenuStub);
+					desklet.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_OFF)
+					enableDeskletDragging(desklet)
+					desklet._menu.actor.disconnect(desklet._onContextMenuStub)
 				}	
 			}
 
 			this.onDeskletWidthChange = function() { 
-				desklet.updateScreenSize(); 
+				desklet.updateScreenSize()
 			}
 
 			this.onDeskletHeightChange = function() { 
-				desklet.updateScreenSize(); 
+				desklet.updateScreenSize()
 			}
 
 			this.onFileToTrackChange = function() {
-				let fileToTrack = desklet.settings.getValue(OPTIONS.FILE_TO_TRACK);
-				desklet.UI.logFileNameLabel.set_text(" " + fileToTrack); 
+				let fileToTrack = desklet.settings.getValue(OPTIONS.FILE_TO_TRACK)
+				desklet.UI.logFileNameLabel.set_text(" " + fileToTrack)
 				// if data stream has been correctly opened previously then close it
 				if ( !desklet.Model.refreshPaused ) 
-					desklet.Model.dataStream.close(null);
+					desklet.Model.dataStream.close(null)
 				// open log file to be displayed
 				try {
-					desklet.Model.dataStream = openDataStream(fileToTrack);
-					desklet.Model.refreshPaused = false;
+					desklet.Model.dataStream = openDataStream(fileToTrack)
+					desklet.Model.refreshPaused = false
 				} catch(error) {
-					desklet.onFailedToOpenDataStream(fileToTrack, error);
+					desklet.onFailedToOpenDataStream(fileToTrack, error)
 				}
-				desklet.Model.screen.clear();
-				desklet.refreshScreen();
+				desklet.Model.screen.clear()
+				desklet.refreshScreen()
 			}
 
 			this.onTextColorChange = function() {
-				let color = textRGBToRGBA(desklet.settings.getValue(OPTIONS.TEXT_COLOR));
-				desklet.UI.logText.set_style( "color: " + color + ";" );
+				let color = textRGBToRGBA(desklet.settings.getValue(OPTIONS.TEXT_COLOR))
+				desklet.UI.logText.set_style( "color: " + color + ";" )
 			}
 
 			this.onHeaderColorChange = function() {
-				let color = textRGBToRGBA(desklet.settings.getValue(OPTIONS.HEADER_COLOR));
-				desklet.UI.headerBox.set_style( "color: " + color + ";" );
+				let color = textRGBToRGBA(desklet.settings.getValue(OPTIONS.HEADER_COLOR))
+				desklet.UI.headerBox.set_style( "color: " + color + ";" )
 			}
 
 			this.onHeaderColorChange = function() {
-				let wrapLinesState = desklet.settings.getValue(OPTIONS.WRAP_LINES);
-				wrapLinesState ? desklet.Model.screen.enableWrapping() : desklet.Model.screen.disableWrapping();
-				desklet.refreshScreen();
+				let wrapLinesState = desklet.settings.getValue(OPTIONS.WRAP_LINES)
+				wrapLinesState ? desklet.Model.screen.enableWrapping() : desklet.Model.screen.disableWrapping()
+				desklet.refreshScreen()
 			}
 
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, this.onDeskletWidthChange, null);
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, this.onDeskletHeightChange, null);
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this.onWallpaperModeChange, null);
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this.onFileToTrackChange, null);
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this.onTextColorChange, null);
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, this.onHeaderColorChange, null);
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, this.onHeaderColorChange, null);
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, this.onDeskletWidthChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, this.onDeskletHeightChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this.onWallpaperModeChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this.onFileToTrackChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this.onTextColorChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, this.onHeaderColorChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, this.onHeaderColorChange, null)
 
 			return this			
 		} (this)
