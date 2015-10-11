@@ -143,15 +143,6 @@ function getPatterns(settings) {
 	return allPatterns;
 }
 
-// Disables desklet dragging.
-function disableDeskletDragging(desklet) {
-	desklet._draggable.inhibit = true;
-}
-
-// Enables desklet dragging.
-function enableDeskletDragging(desklet) {
-	desklet._draggable.inhibit = false;
-}
 
 // Calculates size of virtual screen (from width and height in pixels to width and height in symbols)
 // and returns it formed as { "width": ... , height: ... }
@@ -310,26 +301,17 @@ LogPrinterDesklet.prototype = {
 			let handlers = {}		
 
 			handlers.onWallpaperModeChange = function() {
-				if ( desklet.settings.getValue(OPTIONS.WALLPAPER_MODE) ) {	
-					// disable desklet's dragging and displaying context menu
-					disableDeskletDragging(desklet)
-					desklet._menu.connect("open-state-changed", Lang.bind(desklet, desklet._onContextMenuStub))
-					desklet.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_ON)
-				} else {
-					// restore default behavior
-					desklet.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_OFF)
-					enableDeskletDragging(desklet)
-					desklet._menu.actor.disconnect(desklet._onContextMenuStub)
-				}	
+				desklet.settings.getValue(OPTIONS.WALLPAPER_MODE) ? desklet.lock() : desklet.unlock()	
 			}
 
 			handlers.onDeskletWidthOrHeightChange = function() {
-				desklet.updateScreenSize()
+				desklet.updateDeskletSize()
 			}
 
 			handlers.onFileToTrackChange = function() {
 				let fileToTrack = desklet.settings.getValue(OPTIONS.FILE_TO_TRACK)
 				desklet.UI.logFileNameLabel.set_text(" " + fileToTrack)
+				// TODO refactor interacting with files carefully
 				// if data stream has been correctly opened previously then close it
 				if ( !desklet.Model.refreshPaused ) 
 					desklet.Model.dataStream.close(null)
@@ -345,16 +327,14 @@ LogPrinterDesklet.prototype = {
 			}
 
 			handlers.onTextColorChange = function() {
-				let color = textRGBToRGBA(desklet.settings.getValue(OPTIONS.TEXT_COLOR))
-				desklet.UI.logText.set_style( "color: " + color + ";" )
+				desklet.updateTextColor()
 			}
 
 			handlers.onHeaderColorChange = function() {
-				let color = textRGBToRGBA(desklet.settings.getValue(OPTIONS.HEADER_COLOR))
-				desklet.UI.headerBox.set_style( "color: " + color + ";" )
+				desklet.updateHeaderColor()
 			}
 
-			handlers.onHeaderColorChange = function() {
+			handlers.onWrapLinesChange = function() {
 				let wrapLinesState = desklet.settings.getValue(OPTIONS.WRAP_LINES)
 				wrapLinesState ? desklet.Model.screen.enableWrapping() : desklet.Model.screen.disableWrapping()
 				desklet.refreshScreen()
@@ -366,7 +346,7 @@ LogPrinterDesklet.prototype = {
 			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, handlers.onFileToTrackChange, null)
 			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, handlers.onTextColorChange, null)
 			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, handlers.onHeaderColorChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, handlers.onHeaderColorChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, handlers.onWrapLinesChange, null)
 
 			return handlers			
 		} (this)
@@ -441,8 +421,6 @@ LogPrinterDesklet.prototype = {
 		Mainloop.timeout_add(1000, Lang.bind(this, this._updateLoop));
 	}, 
 
-
-
 	// For use in "Wallpaper Mode", disables standard context menu (which is usualy displayed on right click).
 	_onContextMenuStub: function(menu, open) {
 		// close context menu immediatelly
@@ -463,21 +441,6 @@ LogPrinterDesklet.prototype = {
 		let filtersInUseText = LABELS.FILTERS_IN_USE_PREFIX + enabledPatterns.length;
 		this.UI.regexFiltersInUseLabel.set_text(filtersInUseText);
 		this.refreshScreen();
-	},
-
-	// Changes size of virtual screen and desklet itself.
-	updateScreenSize: function() {
-		// resize whole desklet
-		let deskletSize = sizeInPixels(this.settings);
-		this.UI.window.set_width(deskletSize.width);	
-		this.UI.window.set_height(deskletSize.height);	
-		// resize virtual screen
-		let screenSize = sizeInSymbols(this.settings);
-		this.Model.screen.setWidth(screenSize.width);
-		this.Model.screen.setHeight(screenSize.height);
-		this.onFileToTrackChange();
-		// force display data in already resized screen
-		this.refreshScreen();	
 	},
 
 	// Handles click on 'Clear log area' button in 'Settings' window.
@@ -527,7 +490,57 @@ LogPrinterDesklet.prototype = {
 	_onRegexPattern3Change: function() { this.updateFilter(); },
 	// #5
 	_onUseRegexFilter4Change: function() { this.updateFilter(); },
-	_onRegexPattern4Change: function() { this.updateFilter(); }	
+	_onRegexPattern4Change: function() { this.updateFilter(); },
+
+
+	///// 'Wallpaper Mode' routines
+	lock: function() {
+		this._draggable.inhibit = true // disable dragging using mouse
+		this._menu.connect("open-state-changed", Lang.bind(this, this._onContextMenuStub)) // block context menu
+		this.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_ON)
+	},
+
+	unlock: function() {
+		this.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_OFF)
+		this._menu.actor.disconnect(this._onContextMenuStub) // TODO fix context menu
+		this._draggable.inhibit = false;
+	},
+	/////
+
+
+	///// Appearence of content area and header
+	updateTextColor: function() {
+		let color = textRGBToRGBA(this.settings.getValue(OPTIONS.TEXT_COLOR))
+		this.UI.logText.set_style( "color: " + color + ";" )
+	},
+
+	updateHeaderColor: function() {
+		let color = textRGBToRGBA(this.settings.getValue(OPTIONS.HEADER_COLOR))
+		this.UI.headerBox.set_style( "color: " + color + ";" )
+
+	},
+	/////
+
+
+	///// Changes size of the whole desklet (according to current settings)
+	updateDeskletSize: function() {
+		// resize whole desklet
+		let deskletSize = sizeInPixels(this.settings);
+		this.UI.window.set_width(deskletSize.width);	
+		this.UI.window.set_height(deskletSize.height);	
+		// resize virtual screen
+		let screenSize = sizeInSymbols(this.settings);
+		this.Model.screen.setWidth(screenSize.width);
+		this.Model.screen.setHeight(screenSize.height);
+		this.EventHandlers.onFileToTrackChange();
+		// force display data in already resized screen
+		this.refreshScreen();	
+	},
+	/////
+
+	
+
+
 }
 
 ////////////////////////// TESTS //////////////////////////
