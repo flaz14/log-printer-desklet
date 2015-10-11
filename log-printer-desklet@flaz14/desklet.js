@@ -382,7 +382,10 @@ LogPrinterDesklet.prototype = {
 	}, 
 
 	// Tracks changing width and height of the desklet.
-	_onDeskletWidthChange: function() { this.updateScreenSize(); },
+	_onDeskletWidthChange: function() { 
+		log('onDeskletWidthChange')
+		this.updateScreenSize(); 
+	},
 	_onDeskletHeightChange: function() { this.updateScreenSize(); },
 
 	// For use in "Wallpaper Mode", disables standard context menu (which is usualy displayed on right click).
@@ -892,5 +895,10 @@ function getAllProperties(obj){
 		keys.push(key);
 	}
 	return keys.join("\n");
+}
+
+// Prints message into log with '>>>' prefix.
+function log(msg) {
+	global.log('>>> ' + msg)
 }
 
