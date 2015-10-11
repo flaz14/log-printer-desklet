@@ -545,8 +545,8 @@ LogPrinterDesklet.prototype = {
 
 ////////////////////////// TESTS //////////////////////////
 function allTests(testDir) {
-	logInfo("RUNNING TESTS...")
-	logInfo("test directory: " + testDir)
+	LOG.INFO("RUNNING TESTS...")
+	LOG.INFO("test directory: " + testDir)
 	
 	// Define test cases (one function = one group of test cases):
 	let test_readLinesFromDataStream = {  
@@ -803,16 +803,15 @@ function allTests(testDir) {
 
 		test_with_complex_pattern: function() {
 			let filter = new RegexFilter( ["kernel:.*\[UFW BLOCK\].*DST=224\.0\.0\.1"] )
-			let accepted = filter.test("May  9 17:00:43 athlonx2 kernel: [46769.866007] [UFW BLOCK] IN=eth0 OUT= MAC=01:04:bb:00:38:d5:c4:7c:1f:44:12:e0:08:08 SRC=192.168.1.1 DST=224.0.0.1 LEN=28 TOS=0x00 PREC=0x00 TTL=1 ID=21685 PROTO=2")
+			let accepted = filter.test("May  9 17:00:43 athlonx2 kernel: [46769.866007] [UFW BLOCK] IN=eth0 SRC=192.168.1.1 DST=224.0.0.1")
 			assertEquals( accepted, true )
 		},
 
 		test_another_complex_pattern: function() {
 			let filter = new RegexFilter(["kernel:.*USB"])
-			let accepted = filter.test("May  9 17:08:42 athlonx2 kernel: [47248.276705] usb-storage 1-9:1.0: USB Mass Storage device detected")
+			let accepted = filter.test("May  9 17:08:42 athlonx2 kernel: usb-storage 1-9:1.0: USB device detected")
 			assertEquals( accepted, true )
 		}
-
 	}
 
 	let test_composeRegexFiltersLabel = {
@@ -836,7 +835,7 @@ function allTests(testDir) {
 	runTestCases(test_RegexFilter);
 	runTestCases(test_composeRegexFiltersLabel);
 
-	logInfo("TESTS ARE OK!");
+	LOG.INFO("TESTS ARE OK!");
 }
 
 
@@ -907,13 +906,14 @@ function getAllProperties(obj){
 	return keys.join("\n");
 }
 
-// Prints message into log as it is.
-function logInfo(msg) {
-	global.log(msg)
-}
 
-// Prints message into log with '>>>' prefix.
-function log(msg) {
-	global.log('>>> ' + msg)
+const LOG = {
+	INFO: function(msg) {
+		global.log(msg)
+	},
+
+	DEBUG: function(msg) {
+		global.log('>>> ' + msg)
+	}
 }
 
