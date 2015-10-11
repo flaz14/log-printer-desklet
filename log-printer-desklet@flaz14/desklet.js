@@ -304,35 +304,77 @@ LogPrinterDesklet.prototype = {
 		// all created (by ourselves) UI elements will be stored in UI property
 		this.UI = {};
 
-		this.EventHandlers = new function(desklet) {
-			// Tracks enabling and disabling Wallpaper Mode (when Wallpaper Mode is going ON this functions disables
-			// some standard desklet's actions and vice versa).
-			this._onWallpaperModeChange = function() {
-				log('_onWallpaperModeChange')
+
+		// add handlers to tracking changes in 'Settings' window
+		this.EventHandlers = new function(desklet) {		
+
+			this.onWallpaperModeChange = function() {
+				log('onWallpaperModeChange')
 				log(desklet)
 				if ( desklet.settings.getValue(OPTIONS.WALLPAPER_MODE) ) {	
-					// disable desklet dragging and displaying desklet's standard context menu
+					// disable desklet's dragging and displaying context menu
 					disableDeskletDragging(desklet);
 					desklet._menu.connect("open-state-changed", Lang.bind(desklet, desklet._onContextMenuStub));
 					desklet.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_ON);
 				} else {
-					// enables dragging and context menu						
+					// restore default behavior
 					desklet.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_OFF);
 					enableDeskletDragging(desklet);
 					desklet._menu.actor.disconnect(desklet._onContextMenuStub);
 				}	
 			}
 
+			this.onDeskletWidthChange = function() { 
+				desklet.updateScreenSize(); 
+			}
+
+			this.onDeskletHeightChange = function() { 
+				desklet.updateScreenSize(); 
+			}
+
+			this.onFileToTrackChange = function() {
+				let fileToTrack = desklet.settings.getValue(OPTIONS.FILE_TO_TRACK);
+				desklet.UI.logFileNameLabel.set_text(" " + fileToTrack); 
+				// if data stream has been correctly opened previously then close it
+				if ( !desklet.Model.refreshPaused ) 
+					desklet.Model.dataStream.close(null);
+				// open log file to be displayed
+				try {
+					desklet.Model.dataStream = openDataStream(fileToTrack);
+					desklet.Model.refreshPaused = false;
+				} catch(error) {
+					desklet.onFailedToOpenDataStream(fileToTrack, error);
+				}
+				desklet.Model.screen.clear();
+				desklet.refreshScreen();
+			}
+
+			this.onTextColorChange = function() {
+				let color = textRGBToRGBA(desklet.settings.getValue(OPTIONS.TEXT_COLOR));
+				desklet.UI.logText.set_style( "color: " + color + ";" );
+			}
+
+			this.onHeaderColorChange = function() {
+				let color = textRGBToRGBA(desklet.settings.getValue(OPTIONS.HEADER_COLOR));
+				desklet.UI.headerBox.set_style( "color: " + color + ";" );
+			}
+
+			this.onHeaderColorChange = function() {
+				let wrapLinesState = desklet.settings.getValue(OPTIONS.WRAP_LINES);
+				wrapLinesState ? desklet.Model.screen.enableWrapping() : desklet.Model.screen.disableWrapping();
+				desklet.refreshScreen();
+			}
+
 			return this			
-		}(this)
-		// add handlers to tracking changes of settings
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, this._onDeskletWidthChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, this._onDeskletHeightChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this.EventHandlers._onWallpaperModeChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this._onFileToTrackChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this._onTextColorChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, this._onWrapLinesChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, this._onHeaderColorChange, null);
+		} (this)
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, this.EventHandlers.onDeskletWidthChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, this.EventHandlers.onDeskletHeightChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this.EventHandlers.onWallpaperModeChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this.EventHandlers.onFileToTrackChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this.EventHandlers.onTextColorChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, this.EventHandlers.onHeaderColorChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, this.EventHandlers.onHeaderColorChange, null);
+
 		this.addHandlesForCheckboxesUseRegex(); // ... add handles for checkboxes "Use regular expressions patterns"
 	
 		// create user interface elements
@@ -364,9 +406,10 @@ LogPrinterDesklet.prototype = {
 		this.setupVirualScreen();
 
 		// take into accout other settings
-		this.EventHandlers._onWallpaperModeChange();
-		this._onHeaderColorChange();
-		this._onTextColorChange();
+		this.EventHandlers.onWallpaperModeChange();
+		this.EventHandlers.onTextColorChange();
+		this.EventHandlers.onHeaderColorChange();
+
 
 		// start the timer that updates virtual screen
 		this._updateLoop();
@@ -402,12 +445,7 @@ LogPrinterDesklet.prototype = {
 		Mainloop.timeout_add(1000, Lang.bind(this, this._updateLoop));
 	}, 
 
-	// Tracks changing width and height of the desklet.
-	_onDeskletWidthChange: function() { 
-		log('onDeskletWidthChange')
-		this.updateScreenSize(); 
-	},
-	_onDeskletHeightChange: function() { this.updateScreenSize(); },
+
 
 	// For use in "Wallpaper Mode", disables standard context menu (which is usualy displayed on right click).
 	_onContextMenuStub: function(menu, open) {
@@ -415,49 +453,10 @@ LogPrinterDesklet.prototype = {
 		menu.close();
 	},
 	
-	// Tracks changing path of the log file in Settings window.
-	// When new file name is setup then opens corresponding file, clears virtual screen and refreshes it.
-	_onFileToTrackChange: function() {
-		let fileToTrack = this.settings.getValue(OPTIONS.FILE_TO_TRACK);
-		this.UI.logFileNameLabel.set_text(" " + fileToTrack); 
-
-		// if data stream has been correctly opened previously then close it
-		if ( !this.Model.refreshPaused ) 
-			this.Model.dataStream.close(null);
-		// open log file to be displayed
-		try {
-			this.Model.dataStream = openDataStream(fileToTrack);
-			this.Model.refreshPaused = false;
-		} catch(error) {
-			this.onFailedToOpenDataStream(fileToTrack, error);
-		}
-		this.Model.screen.clear();
-		this.refreshScreen();
-	},
-
 	onFailedToOpenDataStream: function(error, fileName) {
 		let errorMessage = "[ERROR] Cannot open file " + fileName + " : " + Json(error);
 		global.log(errorMessage);
 		this.Model.refreshPaused = true;
-	},
-
-	// Tracks changing text color.
-	_onTextColorChange: function() {
-		let color = textRGBToRGBA(this.settings.getValue(OPTIONS.TEXT_COLOR));
-		this.UI.logText.set_style( "color: " + color + ";" );
-	},
-
-	// Tracks changing color of the labels at the top of desklet.
-	_onHeaderColorChange: function() {
-		let color = textRGBToRGBA(this.settings.getValue(OPTIONS.HEADER_COLOR));
-		this.UI.headerBox.set_style( "color: " + color + ";" );
-	},
-
-	// Tracks changing "Wrap lines" options in the Settings window.
-	_onWrapLinesChange: function() {
-		let wrapLinesState = this.settings.getValue(OPTIONS.WRAP_LINES);
-		wrapLinesState ? this.Model.screen.enableWrapping() : this.Model.screen.disableWrapping();
-		this.refresScreen();
 	},
 
 	// Reads all filters from Settings windows and setups them for the virtual screen.
@@ -480,7 +479,7 @@ LogPrinterDesklet.prototype = {
 		let screenSize = sizeInSymbols(this.settings);
 		this.Model.screen.setWidth(screenSize.width);
 		this.Model.screen.setHeight(screenSize.height);
-		this._onFileToTrackChange();
+		this.onFileToTrackChange();
 		// force display data in already resized screen
 		this.refreshScreen();	
 	},
