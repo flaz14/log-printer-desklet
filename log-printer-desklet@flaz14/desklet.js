@@ -307,8 +307,9 @@ LogPrinterDesklet.prototype = {
 
 		// add handlers to tracking changes in 'Settings' window
 		this.EventHandlers = new function(desklet) {		
+			let handlers = {}		
 
-			this.onWallpaperModeChange = function() {
+			handlers.onWallpaperModeChange = function() {
 				if ( desklet.settings.getValue(OPTIONS.WALLPAPER_MODE) ) {	
 					// disable desklet's dragging and displaying context menu
 					disableDeskletDragging(desklet)
@@ -322,15 +323,11 @@ LogPrinterDesklet.prototype = {
 				}	
 			}
 
-			this.onDeskletWidthChange = function() { 
+			handlers.onDeskletWidthOrHeightChange = function() {
 				desklet.updateScreenSize()
 			}
 
-			this.onDeskletHeightChange = function() { 
-				desklet.updateScreenSize()
-			}
-
-			this.onFileToTrackChange = function() {
+			handlers.onFileToTrackChange = function() {
 				let fileToTrack = desklet.settings.getValue(OPTIONS.FILE_TO_TRACK)
 				desklet.UI.logFileNameLabel.set_text(" " + fileToTrack)
 				// if data stream has been correctly opened previously then close it
@@ -347,31 +344,31 @@ LogPrinterDesklet.prototype = {
 				desklet.refreshScreen()
 			}
 
-			this.onTextColorChange = function() {
+			handlers.onTextColorChange = function() {
 				let color = textRGBToRGBA(desklet.settings.getValue(OPTIONS.TEXT_COLOR))
 				desklet.UI.logText.set_style( "color: " + color + ";" )
 			}
 
-			this.onHeaderColorChange = function() {
+			handlers.onHeaderColorChange = function() {
 				let color = textRGBToRGBA(desklet.settings.getValue(OPTIONS.HEADER_COLOR))
 				desklet.UI.headerBox.set_style( "color: " + color + ";" )
 			}
 
-			this.onHeaderColorChange = function() {
+			handlers.onHeaderColorChange = function() {
 				let wrapLinesState = desklet.settings.getValue(OPTIONS.WRAP_LINES)
 				wrapLinesState ? desklet.Model.screen.enableWrapping() : desklet.Model.screen.disableWrapping()
 				desklet.refreshScreen()
 			}
 
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, this.onDeskletWidthChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, this.onDeskletHeightChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this.onWallpaperModeChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this.onFileToTrackChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this.onTextColorChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, this.onHeaderColorChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, this.onHeaderColorChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, handlers.onDeskletWidthOrHeightChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, handlers.onDeskletWidthOrHeightChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, handlers.onWallpaperModeChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, handlers.onFileToTrackChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, handlers.onTextColorChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, handlers.onHeaderColorChange, null)
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, handlers.onHeaderColorChange, null)
 
-			return this			
+			return handlers			
 		} (this)
 
 		this.addHandlesForCheckboxesUseRegex(); // ... add handles for checkboxes "Use regular expressions patterns"
