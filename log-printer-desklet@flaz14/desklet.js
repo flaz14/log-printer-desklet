@@ -304,10 +304,31 @@ LogPrinterDesklet.prototype = {
 		// all created (by ourselves) UI elements will be stored in UI property
 		this.UI = {};
 
+		this.EventHandlers = new function(desklet) {
+			// Tracks enabling and disabling Wallpaper Mode (when Wallpaper Mode is going ON this functions disables
+			// some standard desklet's actions and vice versa).
+			this._onWallpaperModeChange = function() {
+				log('_onWallpaperModeChange')
+				log(desklet)
+				if ( desklet.settings.getValue(OPTIONS.WALLPAPER_MODE) ) {	
+					// disable desklet dragging and displaying desklet's standard context menu
+					disableDeskletDragging(desklet);
+					desklet._menu.connect("open-state-changed", Lang.bind(desklet, desklet._onContextMenuStub));
+					desklet.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_ON);
+				} else {
+					// enables dragging and context menu						
+					desklet.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_OFF);
+					enableDeskletDragging(desklet);
+					desklet._menu.actor.disconnect(desklet._onContextMenuStub);
+				}	
+			}
+
+			return this			
+		}(this)
 		// add handlers to tracking changes of settings
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, this._onDeskletWidthChange, null);
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, this._onDeskletHeightChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this._onWallpaperModeChange, null);
+		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this.EventHandlers._onWallpaperModeChange, null);
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this._onFileToTrackChange, null);
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this._onTextColorChange, null);
 		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, this._onWrapLinesChange, null);
@@ -343,7 +364,7 @@ LogPrinterDesklet.prototype = {
 		this.setupVirualScreen();
 
 		// take into accout other settings
-		this._onWallpaperModeChange();
+		this.EventHandlers._onWallpaperModeChange();
 		this._onHeaderColorChange();
 		this._onTextColorChange();
 
@@ -392,22 +413,6 @@ LogPrinterDesklet.prototype = {
 	_onContextMenuStub: function(menu, open) {
 		// close context menu immediatelly
 		menu.close();
-	},
-
-	// Tracks enabling and disabling Wallpaper Mode (when Wallpaper Mode is going ON this functions disables
-	// some standard desklet's actions and vice versa).
-	_onWallpaperModeChange: function() {
-		if ( this.settings.getValue(OPTIONS.WALLPAPER_MODE) ) {	
-			// disable desklet dragging and displaying desklet's standard context menu
-			disableDeskletDragging(this);
-			this._menu.connect("open-state-changed", Lang.bind(this, this._onContextMenuStub));
-			this.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_ON);
-		} else {
-			// enables dragging and context menu						
-			this.UI.wallpaperModeLabel.set_text(LABELS.WALLPAPER_MODE_OFF);
-			enableDeskletDragging(this);
-			this._menu.actor.disconnect(this._onContextMenuStub);
-		}	
 	},
 	
 	// Tracks changing path of the log file in Settings window.
