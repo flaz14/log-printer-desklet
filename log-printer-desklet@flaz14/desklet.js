@@ -365,15 +365,16 @@ LogPrinterDesklet.prototype = {
 				desklet.refreshScreen();
 			}
 
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, this.onDeskletWidthChange, null);
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, this.onDeskletHeightChange, null);
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this.onWallpaperModeChange, null);
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this.onFileToTrackChange, null);
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this.onTextColorChange, null);
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, this.onHeaderColorChange, null);
+			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, this.onHeaderColorChange, null);
+
 			return this			
 		} (this)
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, this.EventHandlers.onDeskletWidthChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, this.EventHandlers.onDeskletHeightChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, this.EventHandlers.onWallpaperModeChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, this.EventHandlers.onFileToTrackChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, this.EventHandlers.onTextColorChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, this.EventHandlers.onHeaderColorChange, null);
-		this.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, this.EventHandlers.onHeaderColorChange, null);
 
 		this.addHandlesForCheckboxesUseRegex(); // ... add handles for checkboxes "Use regular expressions patterns"
 	
@@ -484,13 +485,13 @@ LogPrinterDesklet.prototype = {
 		this.refreshScreen();	
 	},
 
-	// Handlers clicks on "Clear log area" button in Settings window.
+	// Handles click on 'Clear log area' button in 'Settings' window.
 	_onClearLogButtonPressed: function() {
 		this.Model.screen.clear();
 		this.UI.logText.set_text("");
 	},
 
-	// Handle clicks on "Reset to default settings" button in Settings window.
+	// Handles click on 'Reset to default settings' button in 'Settings' window.
 	_onResetToDefaultsButtonPressed: function() {
 		for (let nameOfOption in DEFAULTS) {
 			let valueForCurrentOption = DEFAULTS[nameOfOption];
@@ -498,7 +499,7 @@ LogPrinterDesklet.prototype = {
 		}
 	},
 
-	// Adds handles for checkboxes for option "Use regular expressions to supress unwanted lines".
+	// Adds handlers for checkboxes for option "Use regular expressions to supress unwanted lines".
 	// We have 5 checkboxes and 5 corresponding text fields.
 	// Instead of binding handlers for each checkbox and text field by hand we bind them dinamically using eval().
 	addHandlesForCheckboxesUseRegex: function() {
