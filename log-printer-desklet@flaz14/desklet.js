@@ -304,7 +304,8 @@ LogPrinterDesklet.prototype = {
 		this.setupUI();
 	},
 
-	// Adds handlers to tracking changes in 'Settings' window.
+	/////
+	// Adds handlers to tracking changes of the most options in 'Settings' window.
 	bindEventHandlers: function(desklet) {		
 		let handlers = {}		
 
@@ -357,6 +358,27 @@ LogPrinterDesklet.prototype = {
 		desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, handlers.onWrapLinesChange, null)
 
 		return handlers
+	},
+
+	/////
+	// Adds handlers for checkboxes and text fields which are located under 
+	// "Use regular expressions to supress unwanted lines" section of "Settings" window.
+	// Technically we have 5 checkboxes and 5 corresponding text fields.
+	// Instead of binding handlers for each checkbox and text field by hand 
+	// we bind them dinamically using eval().
+	bindEventHandlersForUseRegularExpressions: function(desklet) {
+		let handler = function() { desklet.updateFilter() }
+		for(let currentCheckboxIndex = 0; currentCheckboxIndex < MAX_REGEX_PATTERNS; currentCheckboxIndex++) {
+			// compose property name that corresponds to current checkbox
+			let currentCheckboxPropertyName = OPTIONS.USE_REGEX_FILTER_PREFIX + currentCheckboxIndex
+			// compose property name that corresponds to current text field
+			let currentTextFieldPropertyName = OPTIONS.REGEX_PATTERN_PREFIX + currentCheckboxIndex
+			// glue all together into JavaScript code and evaluate it
+			let bindCheckboxCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + currentCheckboxPropertyName + "\", null, handler, null);"
+			eval(bindCheckboxCall)
+			let bindTextFieldCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + currentTextFieldPropertyName + "\", null, handler, null);"	
+			eval(bindTextFieldCall)
+		}
 	},
 
 	setupUI: function() {
@@ -459,26 +481,6 @@ LogPrinterDesklet.prototype = {
 		}
 	},
 
-
-	// Adds handlers for checkboxes and text fields which are located under 
-	// "Use regular expressions to supress unwanted lines" section of "Settings" window.
-	// Technically we have 5 checkboxes and 5 corresponding text fields.
-	// Instead of binding handlers for each checkbox and text field by hand 
-	// we bind them dinamically using eval().
-	bindEventHandlersForUseRegularExpressions: function(desklet) {
-		let handler = function() { desklet.updateFilter(); }
-		for(let currentCheckboxIndex = 0; currentCheckboxIndex < MAX_REGEX_PATTERNS; currentCheckboxIndex++) {
-			// compose property name that corresponds to current checkbox
-			let currentCheckboxPropertyName = OPTIONS.USE_REGEX_FILTER_PREFIX + currentCheckboxIndex;
-			// compose property name that corresponds to current text field
-			let currentTextFieldPropertyName = OPTIONS.REGEX_PATTERN_PREFIX + currentCheckboxIndex;
-			// glue all together into JavaScript code and evaluate it
-			let bindCheckboxCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + currentCheckboxPropertyName + "\", null, handler, null);";
-			eval(bindCheckboxCall);
-			let bindTextEntryCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + currentTextFieldPropertyName + "\", null, handler, null);"	
-			eval(bindTextEntryCall);
-		}
-	},
 
 	///// 'Wallpaper Mode' routines
 	lock: function() {
