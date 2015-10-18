@@ -296,65 +296,67 @@ LogPrinterDesklet.prototype = {
 		this.UI = {};
 
 
-		// add handlers to tracking changes in 'Settings' window
-		this.EventHandlers = new function(desklet) {		
-			let handlers = {}		
 
-			handlers.onWallpaperModeChange = function() {
-				desklet.settings.getValue(OPTIONS.WALLPAPER_MODE) ? desklet.lock() : desklet.unlock()	
-			}
-
-			handlers.onDeskletWidthOrHeightChange = function() {
-				desklet.updateDeskletSize()
-			}
-
-			handlers.onFileToTrackChange = function() {
-				let fileToTrack = desklet.settings.getValue(OPTIONS.FILE_TO_TRACK)
-				desklet.UI.logFileNameLabel.set_text(" " + fileToTrack)
-				// TODO refactor interacting with files carefully
-				// if data stream has been correctly opened previously then close it
-				if ( !desklet.Model.refreshPaused ) 
-					desklet.Model.dataStream.close(null)
-				// open log file to be displayed
-				try {
-					desklet.Model.dataStream = openDataStream(fileToTrack)
-					desklet.Model.refreshPaused = false
-				} catch(error) {
-					desklet.onFailedToOpenDataStream(fileToTrack, error)
-				}
-				desklet.Model.screen.clear()
-				desklet.refreshScreen()
-			}
-
-			handlers.onTextColorChange = function() {
-				desklet.updateTextColor()
-			}
-
-			handlers.onHeaderColorChange = function() {
-				desklet.updateHeaderColor()
-			}
-
-			handlers.onWrapLinesChange = function() {
-				let wrapLinesState = desklet.settings.getValue(OPTIONS.WRAP_LINES)
-				wrapLinesState ? desklet.Model.screen.enableWrapping() : desklet.Model.screen.disableWrapping()
-				desklet.refreshScreen()
-			}
-
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, handlers.onDeskletWidthOrHeightChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, handlers.onDeskletWidthOrHeightChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, handlers.onWallpaperModeChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, handlers.onFileToTrackChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, handlers.onTextColorChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, handlers.onHeaderColorChange, null)
-			desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, handlers.onWrapLinesChange, null)
-
-			return handlers			
-		} (this)
-
-		this.addHandlesForCheckboxesUseRegex(); // ... add handles for checkboxes "Use regular expressions patterns"
+		this.EventHandlers = this.bindEventHandlers(this)
+		this.bindEventHandlersForUseRegularExpressions(this)
 	
 		// create user interface elements
 		this.setupUI();
+	},
+
+	// Adds handlers to tracking changes in 'Settings' window.
+	bindEventHandlers: function(desklet) {		
+		let handlers = {}		
+
+		handlers.onWallpaperModeChange = function() {
+			desklet.settings.getValue(OPTIONS.WALLPAPER_MODE) ? desklet.lock() : desklet.unlock()	
+		}
+
+		handlers.onDeskletWidthOrHeightChange = function() {
+			desklet.updateDeskletSize()
+		}
+
+		handlers.onFileToTrackChange = function() {
+			let fileToTrack = desklet.settings.getValue(OPTIONS.FILE_TO_TRACK)
+			desklet.UI.logFileNameLabel.set_text(" " + fileToTrack)
+			// TODO refactor interacting with files carefully
+			// if data stream has been correctly opened previously then close it
+			if ( !desklet.Model.refreshPaused ) 
+				desklet.Model.dataStream.close(null)
+			// open log file to be displayed
+			try {
+				desklet.Model.dataStream = openDataStream(fileToTrack)
+				desklet.Model.refreshPaused = false
+			} catch(error) {
+				desklet.onFailedToOpenDataStream(fileToTrack, error)
+			}
+			desklet.Model.screen.clear()
+			desklet.refreshScreen()
+		}
+
+		handlers.onTextColorChange = function() {
+			desklet.updateTextColor()
+		}
+
+		handlers.onHeaderColorChange = function() {
+			desklet.updateHeaderColor()
+		}
+
+		handlers.onWrapLinesChange = function() {
+			let wrapLinesState = desklet.settings.getValue(OPTIONS.WRAP_LINES)
+			wrapLinesState ? desklet.Model.screen.enableWrapping() : desklet.Model.screen.disableWrapping()
+			desklet.refreshScreen()
+		}
+
+		desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_WIDTH,null, handlers.onDeskletWidthOrHeightChange, null)
+		desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.DESKLET_HEIGHT, null, handlers.onDeskletWidthOrHeightChange, null)
+		desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WALLPAPER_MODE, null, handlers.onWallpaperModeChange, null)
+		desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.FILE_TO_TRACK, null, handlers.onFileToTrackChange, null)
+		desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.TEXT_COLOR, null, handlers.onTextColorChange, null)
+		desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.HEADER_COLOR, null, handlers.onHeaderColorChange, null)
+		desklet.settings.bindProperty(Settings.BindingDirection.IN, OPTIONS.WRAP_LINES, null, handlers.onWrapLinesChange, null)
+
+		return handlers
 	},
 
 	setupUI: function() {
@@ -457,41 +459,26 @@ LogPrinterDesklet.prototype = {
 		}
 	},
 
-	// Adds handlers for checkboxes for option "Use regular expressions to supress unwanted lines".
-	// We have 5 checkboxes and 5 corresponding text fields.
-	// Instead of binding handlers for each checkbox and text field by hand we bind them dinamically using eval().
-	addHandlesForCheckboxesUseRegex: function() {
+
+	// Adds handlers for checkboxes and text fields which are located under 
+	// "Use regular expressions to supress unwanted lines" section of "Settings" window.
+	// Technically we have 5 checkboxes and 5 corresponding text fields.
+	// Instead of binding handlers for each checkbox and text field by hand 
+	// we bind them dinamically using eval().
+	bindEventHandlersForUseRegularExpressions: function(desklet) {
+		let handler = function() { desklet.updateFilter(); }
 		for(let currentCheckboxIndex = 0; currentCheckboxIndex < MAX_REGEX_PATTERNS; currentCheckboxIndex++) {
-			// compose names of property and name of handle for each checkbox
-			let checkboxState = OPTIONS.USE_REGEX_FILTER_PREFIX + currentCheckboxIndex;
-			let checkboxHandleName = CHECKBOX_HANDLE_PREFIX + currentCheckboxIndex + CHECKBOX_HANDLE_SUFFIX;
-			// compose names of property and name of handle for each text entry
-			let textEntryValue = OPTIONS.REGEX_PATTERN_PREFIX + currentCheckboxIndex;
-			let textEntryHandleName = ENTRY_HANDLE_PREFIX + currentCheckboxIndex + ENTRY_HANDLE_SUFFIX;
-			// compose whole method calls and execute them via 'eval()'
-			let bindCheckboxCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + checkboxState + "\", null, this." + checkboxHandleName + ", null);";
+			// compose property name that corresponds to current checkbox
+			let currentCheckboxPropertyName = OPTIONS.USE_REGEX_FILTER_PREFIX + currentCheckboxIndex;
+			// compose property name that corresponds to current text field
+			let currentTextFieldPropertyName = OPTIONS.REGEX_PATTERN_PREFIX + currentCheckboxIndex;
+			// glue all together into JavaScript code and evaluate it
+			let bindCheckboxCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + currentCheckboxPropertyName + "\", null, handler, null);";
 			eval(bindCheckboxCall);
-			let bindTextEntryCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + textEntryValue + "\", null, this." + textEntryHandleName + ", null);"	
+			let bindTextEntryCall = "this.settings.bindProperty(Settings.BindingDirection.IN, \"" + currentTextFieldPropertyName + "\", null, handler, null);"	
 			eval(bindTextEntryCall);
 		}
 	},
-	// handlers for checkboxes "Use regular expressions to supress unwanted lines"
-	// #1
-	_onUseRegexFilter0Change: function() { this.updateFilter(); },
-	_onRegexPattern0Change: function() { this.updateFilter(); },
-	// #2
-	_onUseRegexFilter1Change: function() { this.updateFilter(); },
-	_onRegexPattern1Change: function() { this.updateFilter(); },
-	// #3
-	_onUseRegexFilter2Change: function() { this.updateFilter(); },
-	_onRegexPattern2Change: function() { this.updateFilter(); },
-	// #4
-	_onUseRegexFilter3Change: function() { this.updateFilter(); },
-	_onRegexPattern3Change: function() { this.updateFilter(); },
-	// #5
-	_onUseRegexFilter4Change: function() { this.updateFilter(); },
-	_onRegexPattern4Change: function() { this.updateFilter(); },
-
 
 	///// 'Wallpaper Mode' routines
 	lock: function() {
