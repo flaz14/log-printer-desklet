@@ -292,16 +292,20 @@ LogPrinterDesklet.prototype = {
 		// domain of 'Log Printer Desklet' will be stored in Model property
 		this.Model = {};
 		
-		// all created (by ourselves) UI elements will be stored in UI property
-		this.UI = {};
-
-
-
 		this.EventHandlers = this.bindEventHandlers(this)
 		this.bindEventHandlersForUseRegularExpressions(this)
-	
-		// create user interface elements
-		this.setupUI();
+		this.UI = this.setupUI(this);
+
+		// create virual screen
+		this.setupVirualScreen();
+
+		// take into accout other settings
+		this.EventHandlers.onWallpaperModeChange();
+		this.EventHandlers.onTextColorChange();
+		this.EventHandlers.onHeaderColorChange();
+
+		// start the timer that updates virtual screen
+		this._updateLoop();
 	},
 
 	/////
@@ -381,38 +385,35 @@ LogPrinterDesklet.prototype = {
 		}
 	},
 
-	setupUI: function() {
-		// setup whole desklet size; root UI element is '_window'
-		let deskletSize = sizeInPixels(this.settings);
-		this.UI.window = new St.BoxLayout({ vertical: true, width: deskletSize.width, height: deskletSize.height });	
-		this.setContent(this.UI.window);
-		// compose header; it includes labels of currently printed file, state of Wallpaper Mode, count of used regex filters.
-		// all these labels are arranged horizontally from letf to right		
-		this.UI.headerBox = new St.BoxLayout( {vertical: false} ) ;
-		this.UI.logFileNameLabel = new St.Label( {style_class: "header-label"} );
-		this.UI.wallpaperModeLabel = new St.Label( {style_class: "header-button"} );
-		this.UI.regexFiltersInUseLabel = new St.Label( {style_class: "header-button"} );
-		this.UI.headerBox.add(this.UI.logFileNameLabel);
-		this.UI.headerBox.add(this.UI.wallpaperModeLabel);
-		this.UI.headerBox.add(this.UI.regexFiltersInUseLabel);	
-		this.UI.window.add(this.UI.headerBox);
-		// compose area where log file to be printed
-		this.UI.logText = new St.Label({style_class: "log-text"});
-		this.UI.logBox = new St.BoxLayout();
-		this.UI.logBox.add_actor(this.UI.logText);
-		this.UI.window.add(this.UI.logBox);
+	/////
+	// Puts all UI elements onto desklet (currently they are header and content area).
+	setupUI: function(desklet) {
+		let UI = {}
 
-		// create virual screen
-		this.setupVirualScreen();
+		// setup whole desklet size
+		let deskletSize = sizeInPixels(desklet.settings);
+		UI.window = new St.BoxLayout({ vertical: true, width: deskletSize.width, height: deskletSize.height });	
 
-		// take into accout other settings
-		this.EventHandlers.onWallpaperModeChange();
-		this.EventHandlers.onTextColorChange();
-		this.EventHandlers.onHeaderColorChange();
+		// header
+		UI.headerBox = new St.BoxLayout( {vertical: false} ) ;
+		UI.logFileNameLabel = new St.Label( {style_class: "header-label"} );
+		UI.wallpaperModeLabel = new St.Label( {style_class: "header-button"} );
+		UI.regexFiltersInUseLabel = new St.Label( {style_class: "header-button"} );
 
+		// content area, i.e where log file will be printed
+		UI.logText = new St.Label({style_class: "log-text"});
+		UI.logBox = new St.BoxLayout();
 
-		// start the timer that updates virtual screen
-		this._updateLoop();
+		// assemble all UI elements defined above		
+		UI.headerBox.add(UI.logFileNameLabel);
+		UI.headerBox.add(UI.wallpaperModeLabel);
+		UI.headerBox.add(UI.regexFiltersInUseLabel);	
+		UI.logBox.add_actor(UI.logText);
+		UI.window.add(UI.headerBox);
+		UI.window.add(UI.logBox);
+		desklet.setContent(UI.window);
+
+		return UI
 	},
 
 	// Initializes virtual screen at desklet's startup.
