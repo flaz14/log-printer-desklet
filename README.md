@@ -1,6 +1,8 @@
 Log Printer Desklet
 ========
 
+### Desklet is buggy (freezes after hibernation) and sometimes operates slowly.
+
 Desklet for Cinnamon Desktop Environment that prints selected log file like `tail -f` does it.
 
 ### Desklet itself
