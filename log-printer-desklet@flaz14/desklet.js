@@ -18,7 +18,7 @@ const ENTRY_HANDLE_SUFFIX = "Change";
 
 const MAX_REGEX_PATTERNS = 5;
 
-// Text labels on UI elements
+// Text labels on UI
 const LABELS = {
 	"WALLPAPER_MODE_ON":     "          Wallpaper Mode: ON ⚓",
 	"WALLPAPER_MODE_OFF":    "          Wallpaper Mode: OFF",
@@ -26,7 +26,7 @@ const LABELS = {
 	"FILTERS_IN_USE_SUFFIX": "𐏑" 	// 𐏑 - looks like a funnel when font size is huge
 };
 
-// Names of options (corresponding to settings-schema.json)
+// Names of options (in accordance to settings-schema.json)
 const OPTIONS = {
 	"DESKLET_WIDTH":           "deskletWidth",
 	"DESKLET_HEIGHT":          "deskletHeight",
@@ -39,7 +39,7 @@ const OPTIONS = {
 	"WRAP_LINES":              "wrapLines"
 }
 
-// Default settings (customizable in Settings window, should be synchronized with settings-schema.json). 
+// Default settings (customizable in "Settings" window, should be synchronized with settings-schema.json). 
 // And pay attention to tricks with colors notation.
 const DEFAULTS = function() {
 	let all = {};
@@ -50,7 +50,7 @@ const DEFAULTS = function() {
 	all[OPTIONS.TEXT_COLOR] =     "rgb(124,252,0)";
 	all[OPTIONS.WALLPAPER_MODE] = false;
 	all[OPTIONS.WRAP_LINES] =     true;
-	// "Use regex filter..." checkboxes and text fields
+	// "Use regex filter..." section
 	all.useRegexFilter0 =         false;
 	all.regexPattern0 =           "kernel:.*\\[UFW BLOCK\\].*DST=224\\.0\\.0\\.1";
 	all.useRegexFilter1 =         false;
@@ -527,10 +527,6 @@ LogPrinterDesklet.prototype = {
 		this.refreshScreen();	
 	},
 	/////
-
-	
-
-
 }
 
 ////////////////////////// TESTS //////////////////////////
