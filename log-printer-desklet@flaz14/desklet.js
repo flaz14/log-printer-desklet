@@ -99,6 +99,7 @@ function readLinesFromDataStream(dataStream) {
 	return allLines;
 }
 
+
 // Splits string into chunks of length specified by 'chunkLength' parameter.
 function splitString(string, chunkLength) {
 	if (chunkLength <= 0) 
@@ -121,6 +122,7 @@ function splitString(string, chunkLength) {
 	return chunks;
 }
 
+
 // Analyzes desklet's settings and returns array of enabled (marked checkboxes) regular expressions patterns.
 function getPatterns(settings) {
 	let allPatterns = [];
@@ -142,6 +144,34 @@ function getPatterns(settings) {
 	}
 	return allPatterns;
 }
+
+
+// This function similar to "getPatterns()", but indicates states of all enabled/disabled patterns.
+function getPatternsFlags(settings) {
+	let allPatterns = [];
+	for(let currentPatternIndex = 0; currentPatternIndex < MAX_REGEX_PATTERNS; currentPatternIndex++ ) {
+		// compose name of fields for appropriate settings (in form <string><number>)
+		let currentPatternStateField = OPTIONS.USE_REGEX_FILTER_PREFIX + currentPatternIndex;
+		let currentPatternValueField = OPTIONS.REGEX_PATTERN_PREFIX + currentPatternIndex;
+		// get settings for current pattern
+		let isCurrentPatternEnabled = settings.getValue(currentPatternStateField);
+		let currentPatternValue = settings.getValue(currentPatternValueField);
+		// examine pattern: empty pattern matches to any line, so reject empty patterns;
+		// also reject patterns which consist of only whitespace characters 
+		// (they are unvisible in settings window and may lead to misunderstanding)
+		if ( currentPatternValue.trim().length == 0 ) {
+			allPatterns.push(false)
+			continue;
+		}
+		if (!isCurrentPatternEnabled) {
+			allPatterns.push(false);
+			continue
+		}
+		allPatterns.push(true)
+	}
+	return allPatterns;	
+}
+
 
 
 // Calculates size of virtual screen (from width and height in pixels to width and height in symbols)
@@ -397,8 +427,8 @@ LogPrinterDesklet.prototype = {
 		// header
 		UI.headerBox = new St.BoxLayout( {vertical: false} ) ;
 		UI.logFileNameLabel = new St.Label( {style_class: "header-label"} );
-		UI.wallpaperModeLabel = new St.Label( {style_class: "header-button"} );
-		UI.regexFiltersInUseLabel = new St.Label( {style_class: "header-button"} );
+		UI.wallpaperModeLabel = new St.Label( {style_class: "header-lump"} );
+		UI.regexFiltersInUseLabel = new St.Label( {style_class: "header-lump"} );
 
 		// content area, i.e where log file will be printed
 		UI.logText = new St.Label({style_class: "log-text"});
@@ -463,7 +493,14 @@ LogPrinterDesklet.prototype = {
 		let enabledPatterns = getPatterns(this.settings);
 		this.Model.screen.setFilter(new RegexFilter(enabledPatterns) );
 		// update text 'Filters in use: ...' at the header of desklet
-		let filtersInUseText = LABELS.FILTERS_IN_USE_PREFIX + enabledPatterns.length;
+		let filtersInUseText = ""
+		let flags = getPatternsFlags(this.settings)
+		for(let index = 0; index < flags.length; index++) {
+			if (flags[index])
+				filtersInUseText += "☑"
+			else 
+				filtersInUseText += "☐"
+		}
 		this.UI.regexFiltersInUseLabel.set_text(filtersInUseText);
 		this.refreshScreen();
 	},
