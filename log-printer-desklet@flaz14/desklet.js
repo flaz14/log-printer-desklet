@@ -435,9 +435,9 @@ LogPrinterDesklet.prototype = {
 		UI.logBox = new St.BoxLayout();
 
 		// assemble all UI elements defined above		
-		UI.headerBox.add(UI.logFileNameLabel);
 		UI.headerBox.add(UI.wallpaperModeLabel);
-		UI.headerBox.add(UI.regexFiltersInUseLabel);	
+		UI.headerBox.add(UI.regexFiltersInUseLabel);
+		UI.headerBox.add(UI.logFileNameLabel);
 		UI.logBox.add_actor(UI.logText);
 		UI.window.add(UI.headerBox);
 		UI.window.add(UI.logBox);
