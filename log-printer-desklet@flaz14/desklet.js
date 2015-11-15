@@ -20,8 +20,8 @@ const MAX_REGEX_PATTERNS = 5;
 
 // Text labels on UI
 const LABELS = {
-	"WALLPAPER_MODE_ON":     "█",
-	"WALLPAPER_MODE_OFF":    "▒",
+	"WALLPAPER_MODE_ON":     "█ ",
+	"WALLPAPER_MODE_OFF":    "░ ",
 	"FILTERS_IN_USE_PREFIX": " ",   
 	"FILTERS_IN_USE_SUFFIX": "𐏑" 	// 𐏑 - looks like a funnel when font size is huge
 };
@@ -353,7 +353,7 @@ LogPrinterDesklet.prototype = {
 
 		handlers.onFileToTrackChange = function() {
 			let fileToTrack = desklet.settings.getValue(OPTIONS.FILE_TO_TRACK)
-			desklet.UI.logFileNameLabel.set_text(" " + fileToTrack)
+			desklet.UI.logFileNameLabel.set_text(" " + fileToTrack + "\n" + "TODO some line here")
 			// TODO refactor interacting with files carefully
 			// if data stream has been correctly opened previously then close it
 			if ( !desklet.Model.refreshPaused ) 
