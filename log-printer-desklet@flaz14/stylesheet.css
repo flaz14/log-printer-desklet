@@ -10,7 +10,13 @@
 	font-size: 120%;
 }
 
-.header-lump {
+.anchor-icon {
+	font-weight: bold;
+	font-family: "Courier";
+	font-size: 250%;
+}
+
+.checkbox-icon {
 	font-weight: bold;
 	font-family: "Courier";
 	font-size: 250%;

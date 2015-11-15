@@ -20,8 +20,8 @@ const MAX_REGEX_PATTERNS = 5;
 
 // Text labels on UI
 const LABELS = {
-	"WALLPAPER_MODE_ON":     "          Wallpaper Mode: ON ⚓",
-	"WALLPAPER_MODE_OFF":    "          Wallpaper Mode: OFF",
+	"WALLPAPER_MODE_ON":     "█",
+	"WALLPAPER_MODE_OFF":    "▒",
 	"FILTERS_IN_USE_PREFIX": " ",   
 	"FILTERS_IN_USE_SUFFIX": "𐏑" 	// 𐏑 - looks like a funnel when font size is huge
 };
@@ -427,8 +427,8 @@ LogPrinterDesklet.prototype = {
 		// header
 		UI.headerBox = new St.BoxLayout( {vertical: false} ) ;
 		UI.logFileNameLabel = new St.Label( {style_class: "header-label"} );
-		UI.wallpaperModeLabel = new St.Label( {style_class: "header-lump"} );
-		UI.regexFiltersInUseLabel = new St.Label( {style_class: "header-lump"} );
+		UI.wallpaperModeLabel = new St.Label( {style_class: "anchor-icon"} );
+		UI.regexFiltersInUseLabel = new St.Label( {style_class: "checkbox-icon"} );
 
 		// content area, i.e where log file will be printed
 		UI.logText = new St.Label({style_class: "log-text"});
